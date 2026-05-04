@@ -11,7 +11,7 @@
     <h1>The Hangar</h1>
     <nav>
       <a href="home.html#home">Home</a>
-      <a href="home.html#about">About</a>
+      <a href="home.html#planner">Routes</a>
       <a href="home.html#contact">Contact</a>
       <a href="index.html" class="logout-link">Logout</a>
     </nav>
@@ -26,35 +26,23 @@
       <p class="eyebrow">Fleet intelligence</p>
       <h2>Select the aircraft that matches the mission.</h2>
       <p>
-        A polished aircraft room for comparing range, purpose, and character before you open the full dossier.
+        A polished aircraft room for comparing range, purpose, capacity, and charter personality before you open the full dossier.
       </p>
     </section>
 
     <section class="hangar-toolbar" aria-label="Fleet categories">
-      <span>Commercial</span>
       <span>Training</span>
-      <span>Tactical</span>
+      <span>Light Jet</span>
+      <span>Super-Midsize</span>
+      <span>Ultra-Long-Range</span>
+      <span>VIP Airliner</span>
     </section>
 
     <section class="aircraft-grid premium-aircraft-grid" aria-label="Aircraft collection">
       <article class="aircraft-card premium-aircraft-card">
-        <img src="images/boeing-737.jpg" alt="Boeing 737 passenger airplane">
-        <div>
-          <span class="aircraft-tag">Commercial Jet</span>
-          <h3>Boeing 737</h3>
-          <p>Confident short and medium route capability with a cabin built for efficient passenger movement.</p>
-          <dl>
-            <div><dt>Range</dt><dd>3,500 nm</dd></div>
-            <div><dt>Capacity</dt><dd>149-189</dd></div>
-          </dl>
-          <a class="button-link primary-action" href="plane.html?plane=boeing-737">Open Dossier</a>
-        </div>
-      </article>
-
-      <article class="aircraft-card premium-aircraft-card featured-aircraft">
         <img src="images/cessna-172.jpg" alt="Cessna 172 light airplane">
         <div>
-          <span class="aircraft-tag">Private Training</span>
+          <span class="aircraft-tag">Training Aircraft</span>
           <h3>Cessna 172</h3>
           <p>A calm, dependable aircraft for learning, private hops, and precise fundamentals in the sky.</p>
           <dl>
@@ -66,16 +54,72 @@
       </article>
 
       <article class="aircraft-card premium-aircraft-card">
-        <img src="images/f-16.jpg" alt="F-16 Fighting Falcon jet aircraft">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/M-FLYI_Cessna_Citation_CJ4_(23595286172).jpg" alt="Cessna Citation CJ4 private jet">
         <div>
-          <span class="aircraft-tag">Tactical Jet</span>
-          <h3>F-16 Fighting Falcon</h3>
-          <p>High-performance, mission-ready engineering with the urgency and precision of modern air power.</p>
+          <span class="aircraft-tag">Light Jet</span>
+          <h3>Cessna Citation CJ4</h3>
+          <p>Fast, efficient, and polished for regional executive travel with a premium cabin feel.</p>
           <dl>
-            <div><dt>Speed</dt><dd>Mach 2+</dd></div>
-            <div><dt>Role</dt><dd>Multirole</dd></div>
+            <div><dt>Range</dt><dd>2,165 nm</dd></div>
+            <div><dt>Seats</dt><dd>8-10</dd></div>
           </dl>
-          <a class="button-link primary-action" href="plane.html?plane=f-16">Open Dossier</a>
+          <a class="button-link primary-action" href="plane.html?plane=citation-cj4">Open Dossier</a>
+        </div>
+      </article>
+
+      <article class="aircraft-card premium-aircraft-card">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Embraer_Phenom_300.jpg" alt="Embraer Phenom 300 private jet">
+        <div>
+          <span class="aircraft-tag">Premium Light Jet</span>
+          <h3>Embraer Phenom 300</h3>
+          <p>A sleek light jet often favored for speed, comfort, and stylish short-to-medium routes.</p>
+          <dl>
+            <div><dt>Range</dt><dd>2,010 nm</dd></div>
+            <div><dt>Seats</dt><dd>6-9</dd></div>
+          </dl>
+          <a class="button-link primary-action" href="plane.html?plane=phenom-300">Open Dossier</a>
+        </div>
+      </article>
+
+      <article class="aircraft-card premium-aircraft-card featured-aircraft">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/9H-VCB_AIRCRAFT_Bombardier_Challenger_350.jpg" alt="Bombardier Challenger 350 private jet">
+        <div>
+          <span class="aircraft-tag">Super-Midsize Jet</span>
+          <h3>Challenger 350</h3>
+          <p>A charter favorite for refined cabins, strong range, and confident transcontinental missions.</p>
+          <dl>
+            <div><dt>Range</dt><dd>3,200 nm</dd></div>
+            <div><dt>Seats</dt><dd>8-10</dd></div>
+          </dl>
+          <a class="button-link primary-action" href="plane.html?plane=challenger-350">Open Dossier</a>
+        </div>
+      </article>
+
+      <article class="aircraft-card premium-aircraft-card">
+        <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Gulfstream_G650.JPG" alt="Gulfstream G650 private jet">
+        <div>
+          <span class="aircraft-tag">Ultra-Long-Range Jet</span>
+          <h3>Gulfstream G650</h3>
+          <p>Long-range luxury for intercontinental flights where speed, cabin calm, and prestige matter.</p>
+          <dl>
+            <div><dt>Range</dt><dd>7,000 nm</dd></div>
+            <div><dt>Seats</dt><dd>11-18</dd></div>
+          </dl>
+          <a class="button-link primary-action" href="plane.html?plane=gulfstream-g650">Open Dossier</a>
+        </div>
+      </article>
+
+      <article class="aircraft-card premium-aircraft-card">
+        <img src="images/boeing-737.jpg" alt="Boeing 737 passenger airplane">
+        <div>
+          <span class="aircraft-tag">VIP Airliner</span>
+          <h3>Boeing 737</h3>
+          <p>High-capacity aircraft for larger groups, executive movements, and premium commercial operations.</p>
+          <dl>
+            <div><dt>Range</dt><dd>3,500 nm</dd></div>
+            <div><dt>Capacity</dt><dd>149-189</dd></div>
+          </dl>
+          <a class="button-link primary-action" href="plane.html?plane=boeing-737">Open Dossier</a>
         </div>
       </article>
     </section>

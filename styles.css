@@ -208,7 +208,9 @@ main {
 }
 
 .flight-panel input,
-.flight-panel select {
+.flight-panel select,
+.route-form input,
+.route-form select {
   background: #fffaf0;
   border: 1px solid #d8c99f;
   border-radius: 4px;
@@ -217,6 +219,108 @@ main {
   font-size: 16px;
   padding: 12px;
   width: 100%;
+}
+
+.route-estimator {
+  background: rgba(8, 12, 18, 0.84);
+  border: 1px solid rgba(214, 183, 108, 0.3);
+  color: #fff7e8;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: 0.9fr 1fr;
+  max-width: 1040px;
+  padding: 34px;
+  width: 100%;
+}
+
+.route-copy h2 {
+  font-size: 40px;
+  font-weight: 500;
+  line-height: 1.05;
+}
+
+.route-copy p:last-child {
+  color: rgba(255, 247, 232, 0.76);
+  font-family: Arial, sans-serif;
+  line-height: 1.7;
+  margin-top: 16px;
+}
+
+.route-form {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.route-form label {
+  color: #d8c99f;
+  display: grid;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 8px;
+  text-transform: uppercase;
+}
+
+.route-form button {
+  grid-column: 1 / -1;
+}
+
+.price-result {
+  background: rgba(255, 252, 244, 0.94);
+  border: 1px solid rgba(214, 183, 108, 0.35);
+  color: #18202b;
+  grid-column: 1 / -1;
+  padding: 26px;
+}
+
+.price-result strong {
+  display: block;
+  font-size: clamp(30px, 5vw, 54px);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.price-result p,
+.price-result small,
+.price-result dt,
+.price-result dd {
+  font-family: Arial, sans-serif;
+}
+
+.price-result p {
+  color: #5f6875;
+  line-height: 1.6;
+  margin-top: 10px;
+}
+
+.price-result dl {
+  border-bottom: 1px solid rgba(176, 141, 60, 0.24);
+  border-top: 1px solid rgba(176, 141, 60, 0.24);
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 18px 0;
+  padding: 16px 0;
+}
+
+.price-result dt {
+  color: #9b7830;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.price-result dd {
+  color: #17202c;
+  font-weight: 700;
+  margin-top: 4px;
+}
+
+.price-result small {
+  color: #6f7882;
+  display: block;
+  line-height: 1.5;
 }
 
 .stats-band {
@@ -439,7 +543,7 @@ main {
 .plane-card {
   background:
     linear-gradient(rgba(10, 16, 24, 0.3), rgba(10, 16, 24, 0.82)),
-    url("images/boeing-737.jpg");
+    var(--plane-image, url("images/boeing-737.jpg"));
   background-position: center;
   background-size: cover;
   border: 1px solid rgba(214, 183, 108, 0.36);
@@ -453,18 +557,6 @@ main {
   padding: 18px;
   text-decoration: none;
   transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-}
-
-.plane-card:nth-child(2) {
-  background-image:
-    linear-gradient(rgba(10, 16, 24, 0.24), rgba(10, 16, 24, 0.82)),
-    url("images/cessna-172.jpg");
-}
-
-.plane-card:nth-child(3) {
-  background-image:
-    linear-gradient(rgba(10, 16, 24, 0.24), rgba(10, 16, 24, 0.82)),
-    url("images/f-16.jpg");
 }
 
 .plane-card:hover {
@@ -923,7 +1015,8 @@ body.dark-mode .aircraft-card {
 
 body.dark-mode .premium-aircraft-card,
 body.dark-mode .spec-card,
-body.dark-mode .premium-auth-card {
+body.dark-mode .premium-auth-card,
+body.dark-mode .price-result {
   background: rgba(32, 39, 51, 0.9);
   border-color: rgba(214, 183, 108, 0.28);
 }
@@ -931,8 +1024,15 @@ body.dark-mode .premium-auth-card {
 body.dark-mode .premium-aircraft-card p,
 body.dark-mode .premium-aircraft-card dd,
 body.dark-mode .spec-card strong,
-body.dark-mode .section-intro {
+body.dark-mode .section-intro,
+body.dark-mode .price-result strong,
+body.dark-mode .price-result dd {
   color: #eef3f8;
+}
+
+body.dark-mode .price-result p,
+body.dark-mode .price-result small {
+  color: #b7c2cf;
 }
 
 body.dark-mode .plane-card small {
@@ -982,11 +1082,14 @@ body.dark-mode .back-link {
     width: 100%;
   }
 
-  .stats-band,
-  .about-luxury,
-  .contact-panel,
-  .service-grid,
-  .premium-aircraft-grid,
+.stats-band,
+.about-luxury,
+.contact-panel,
+.route-estimator,
+.route-form,
+.price-result dl,
+.service-grid,
+.premium-aircraft-grid,
   .dossier-panel,
   .mission-brief,
   .auth-split,
