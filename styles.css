@@ -785,6 +785,19 @@ main {
   align-self: stretch;
 }
 
+.auth-message {
+  color: #9e2f2f;
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  min-height: 20px;
+  text-align: left;
+}
+
+.auth-message.success {
+  color: #256a3d;
+}
+
 .detail-list {
   margin: 22px 0;
 }
