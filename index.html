@@ -3,18 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flight Control | Private Aviation</title>
+  <title>Flight Control | Member Access</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <header class="site-header">
-    <h1>Flight Control</h1>
+<body class="auth-page">
+  <header>
+    <h1>Member Access</h1>
     <nav>
-      <a href="#home">Home</a>
-      <a href="#fleet">Fleet</a>
-      <a href="#about">About</a>
-      <a href="#contact">Contact</a>
-      <a href="login.html">Login</a>
       <a href="signup.html">Signup</a>
     </nav>
     <label class="switch" aria-label="Toggle dark mode">
@@ -23,118 +18,35 @@
     </label>
   </header>
 
-  <section class="luxury-hero" id="home" aria-label="Private aviation hero">
-    <div class="hero-content">
-      <p class="eyebrow">Private aviation, precisely arranged</p>
-      <h2>Command the sky with quiet luxury.</h2>
-      <p class="hero-copy">
-        Flight Control brings aircraft insight, fleet access, and concierge-level planning into one refined aviation experience.
-      </p>
-      <div class="hero-actions">
-        <a class="button-link primary-action" href="aircraft.html">Explore Aircraft</a>
-        <a class="button-link secondary-action" href="#contact">Request Consultation</a>
-      </div>
-    </div>
-
-    <form class="flight-panel" aria-label="Flight request form">
-      <span class="panel-label">Request a route</span>
-      <label>
-        From
-        <input type="text" value="Nairobi" aria-label="Departure city">
-      </label>
-      <label>
-        To
-        <input type="text" placeholder="Destination" aria-label="Destination city">
-      </label>
-      <label>
-        Aircraft class
-        <select aria-label="Aircraft class">
-          <option>Business Jet</option>
-          <option>Light Aircraft</option>
-          <option>Commercial Jet</option>
-        </select>
-      </label>
-      <button type="button" id="btn">View Fleet</button>
-    </form>
-  </section>
-
-  <main>
-    <section class="stats-band" aria-label="Flight Control highlights">
-      <div>
-        <strong>24/7</strong>
-        <span>Operations support</span>
-      </div>
-      <div>
-        <strong>3</strong>
-        <span>Aircraft categories</span>
-      </div>
-      <div>
-        <strong>NBO</strong>
-        <span>Nairobi based</span>
-      </div>
-    </section>
-
-    <section class="card home-card luxury-section" id="fleet">
-      <p class="eyebrow">Curated fleet</p>
-      <h2>Aircraft for every mission</h2>
-      <p class="section-intro">
-        Compare capable aircraft, from efficient trainers to proven passenger jets and high-performance military platforms.
-      </p>
-      <div class="plane-grid" aria-label="Plane types">
-        <a class="plane-card" href="plane.html?plane=boeing-737">
-          <span>Boeing 737</span>
-          <small>Commercial passenger jet</small>
-        </a>
-        <a class="plane-card" href="plane.html?plane=cessna-172">
-          <span>Cessna 172</span>
-          <small>Training and private aircraft</small>
-        </a>
-        <a class="plane-card" href="plane.html?plane=f-16">
-          <span>F-16 Fighting Falcon</span>
-          <small>Military fighter jet</small>
-        </a>
-      </div>
-    </section>
-
-    <section class="about-luxury" id="about">
-      <div>
-        <p class="eyebrow">Aviation intelligence</p>
-        <h2>Designed for smoother decisions before takeoff.</h2>
-      </div>
-      <div class="about-copy">
+  <main class="auth-main">
+    <section class="auth-split">
+      <div class="auth-story">
+        <p class="eyebrow">Concierge portal</p>
+        <h2>Welcome back to your private flight desk.</h2>
         <p>
-          Flight Control is dedicated to aviation technology, aircraft education, and control systems that make flight planning feel clear, safe, and beautifully organized.
+          Sign in first, then continue into the Flight Control lounge for aircraft research, route planning, and aviation support.
         </p>
-        <p>
-          Inspired by aviation pioneers, we combine precision, reliability, and a refined user experience for pilots, engineers, students, and aviation enthusiasts.
-        </p>
+        <div class="auth-proof">
+          <span>Secure access</span>
+          <span>Fleet intelligence</span>
+          <span>Nairobi operations</span>
+        </div>
       </div>
-      <div class="service-grid">
-        <article>
-          <h3>Flight Management</h3>
-          <p>Modern tools and resources for understanding aircraft performance and operational planning.</p>
-        </article>
-        <article>
-          <h3>Training Resources</h3>
-          <p>Accessible aviation knowledge for learners and professionals building confidence in the field.</p>
-        </article>
-        <article>
-          <h3>Safety Focus</h3>
-          <p>A calm, precise approach to information that supports better aviation decisions.</p>
-        </article>
-      </div>
-    </section>
 
-    <section class="contact-panel" id="contact">
-      <div>
-        <p class="eyebrow">Concierge desk</p>
-        <h2>Start your next aviation conversation.</h2>
-      </div>
-      <div class="contact-details">
-        <p>Email: <a href="mailto:perezmainaabel@gmail.com">perezmainaabel@gmail.com</a></p>
-        <p>Phone: <a href="tel:+254740218358">+254 740 218 358</a></p>
-        <p>Location: Nairobi, Kenya</p>
-      </div>
+      <section class="card auth-card premium-auth-card">
+        <p class="eyebrow">Sign in</p>
+        <h2>Enter the lounge</h2>
+        <form class="auth-form auth-login-form">
+          <label for="loginEmail">Email</label>
+          <input type="email" id="loginEmail" name="email" placeholder="name@example.com" required>
+
+          <label for="loginPassword">Password</label>
+          <input type="password" id="loginPassword" name="password" placeholder="Your password" required>
+
+          <button type="submit">Login</button>
+        </form>
+        <p>Need an account? <a class="back-link" href="signup.html">Request access</a></p>
+      </section>
     </section>
   </main>
 
