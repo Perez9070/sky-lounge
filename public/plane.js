@@ -16,7 +16,7 @@ const planes = {
     type: "Commercial passenger jet",
     condition: "Operational, regularly maintained",
     signature: "High-capacity movement",
-    specs: "Typical capacity: 149-189 passengers, range: about 3,500 nautical miles, engines: twin turbofan."
+    specs: "Typical capacity: 149-189 passengers, range: about 3,500 nautical miles, engines: twin turbofan. VIP airliner pricing is highly route- and configuration-dependent, so it should be handled as a custom quote."
   },
   "cessna-172": {
     name: "Cessna 172",
@@ -26,7 +26,7 @@ const planes = {
     type: "Light utility and training aircraft",
     condition: "Training-ready, good mechanical condition",
     signature: "Calm fundamentals",
-    specs: "Seats: 4, range: about 640 nautical miles, engine: single piston engine."
+    specs: "Seats: 4, range: about 640 nautical miles, engine: single piston engine. Typical wet rental planning range: about $140-$260 per flight hour before instructor, airport, or local handling fees."
   },
   "citation-cj4": {
     name: "Cessna Citation CJ4",
@@ -36,7 +36,7 @@ const planes = {
     type: "Light business jet",
     condition: "Charter-ready, executive cabin standard",
     signature: "Regional luxury with speed",
-    specs: "Typical seats: 8-10, range: about 2,165 nautical miles, cruise speed: around 451 knots."
+    specs: "Typical seats: 8-10, range: about 2,165 nautical miles, cruise speed: around 451 knots. Typical light jet charter benchmark: about $3,500-$6,000 per flight hour."
   },
   "phenom-300": {
     name: "Embraer Phenom 300",
@@ -46,7 +46,7 @@ const planes = {
     type: "Light business jet",
     condition: "Charter-ready, modern cabin",
     signature: "Sleek short-route comfort",
-    specs: "Typical seats: 6-9, range: about 2,010 nautical miles, cruise speed: around 453 knots."
+    specs: "Typical seats: 6-9, range: about 2,010 nautical miles, cruise speed: around 453 knots. Typical light jet charter benchmark: about $3,500-$6,000 per flight hour."
   },
   "challenger-350": {
     name: "Bombardier Challenger 350",
@@ -56,7 +56,7 @@ const planes = {
     type: "Super-midsize business jet",
     condition: "Charter-ready, long-cabin comfort",
     signature: "Executive range and calm",
-    specs: "Typical seats: 8-10, range: about 3,200 nautical miles, cruise speed: around 459 knots."
+    specs: "Typical seats: 8-10, range: about 3,200 nautical miles, cruise speed: around 459 knots. Typical super-midsize charter benchmark: about $6,500-$11,000 per flight hour."
   },
   "gulfstream-g650": {
     name: "Gulfstream G650",
@@ -66,7 +66,7 @@ const planes = {
     type: "Ultra-long-range business jet",
     condition: "Flagship charter standard",
     signature: "Intercontinental prestige",
-    specs: "Typical seats: 11-18, range: about 7,000 nautical miles, high-speed cruise capability for long global routes."
+    specs: "Typical seats: 11-18, range: about 7,000 nautical miles, high-speed cruise capability for long global routes. Typical ultra-long-range charter benchmark: about $12,000-$20,000 per flight hour."
   }
 };
 

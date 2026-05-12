@@ -10,6 +10,7 @@
   <header class="site-header">
     <h1>Flight Control</h1>
     <nav>
+     <!-- <img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/github.png" alt="github"/> </a> -->
       <a href="#home">Home</a>
       <a href="#fleet">Fleet</a>
       <a href="#about">About</a>
@@ -24,10 +25,10 @@
 
   <section class="luxury-hero" id="home" aria-label="Private aviation hero">
     <div class="hero-content">
-      <p class="eyebrow">Private aviation, precisely arranged</p>
-      <h2>Command the sky with quiet luxury.</h2>
+      <p class="eyebrow">Market-aware private aviation</p>
+      <h2>Plan the right aircraft at the right price.</h2>
       <p class="hero-copy">
-        Flight Control brings aircraft insight, fleet access, and concierge-level planning into one refined aviation experience.
+        Flight Control pairs polished aircraft discovery with realistic 2026 charter benchmarks, clear route estimates, and a Nairobi-based concierge desk.
       </p>
       <div class="hero-actions">
       <a class="button-link primary-action" href="aircraft.html">Explore Aircraft</a>
@@ -48,11 +49,16 @@
       <label>
         Aircraft class
         <select id="heroAircraftClass" aria-label="Aircraft class">
+          <option value="turboprop">Turboprop</option>
           <option value="light">Light Jet</option>
           <option value="midsize">Midsize Jet</option>
           <option value="superMidsize">Super-Midsize Jet</option>
           <option value="ultraLong">Ultra-Long-Range Jet</option>
         </select>
+      </label>
+      <label>
+        Currency
+        <select id="heroCurrency" aria-label="Quote currency"></select>
       </label>
       <button type="button" id="heroQuoteBtn">Estimate Flight</button>
     </form>
@@ -65,8 +71,8 @@
         <span>Operations support</span>
       </div>
       <div>
-        <strong>18</strong>
-        <span>Global city routes</span>
+        <strong>2026</strong>
+        <span>Market benchmarks</span>
       </div>
       <div>
         <strong>NBO</strong>
@@ -77,9 +83,9 @@
     <section class="route-estimator" id="planner">
       <div class="route-copy">
         <p class="eyebrow">Global route desk</p>
-        <h2>Estimate private flight pricing between world cities.</h2>
+        <h2>Estimate private flight pricing with realistic market ranges.</h2>
         <p>
-          Pick two countries, choose a jet class, and get a polished planning estimate based on distance, flight time, and typical private charter hourly rates.
+          Pick two cities, choose an aircraft class, and get a planning range based on distance, flight time, class capacity, and current private charter pricing patterns.
         </p>
       </div>
 
@@ -95,6 +101,8 @@
         <label>
           Aircraft class
           <select id="routeAircraftClass">
+            <option value="piston">Piston Aircraft</option>
+            <option value="turboprop">Turboprop</option>
             <option value="light">Light Jet</option>
             <option value="midsize">Midsize Jet</option>
             <option value="superMidsize">Super-Midsize Jet</option>
@@ -107,6 +115,10 @@
           Passengers
           <input id="routePassengers" type="number" value="4" min="1" max="50">
         </label>
+        <label>
+          Currency
+          <select id="routeCurrency"></select>
+        </label>
         <button type="button" id="quoteBtn">Calculate Estimate</button>
       </form>
 
@@ -114,6 +126,35 @@
         <span class="panel-label">Estimated charter quote</span>
         <strong>Select a route</strong>
         <p>Your price range will appear here.</p>
+      </div>
+    </section>
+
+    <section class="market-band" aria-label="Pricing market benchmarks">
+      <div>
+        <p class="eyebrow">Pricing intelligence</p>
+        <h2>Benchmarked, transparent, and easier to trust.</h2>
+      </div>
+      <div class="market-grid">
+        <article>
+          <span>$140-$260/hr</span>
+          <h3>Piston Aircraft</h3>
+          <p>Best for training, scenic flights, and short private hops.</p>
+        </article>
+        <article>
+          <span>$1,800-$3,000/hr</span>
+          <h3>Turboprop</h3>
+          <p>Efficient regional movement with more cabin utility.</p>
+        </article>
+        <article>
+          <span>$3,500-$6,000/hr</span>
+          <h3>Light Jet</h3>
+          <p>The strongest value point for many short-to-medium routes.</p>
+        </article>
+        <article>
+          <span>$12,000-$20,000/hr</span>
+          <h3>Ultra-Long-Range</h3>
+          <p>Built for intercontinental speed, range, and premium cabins.</p>
+        </article>
       </div>
     </section>
 
