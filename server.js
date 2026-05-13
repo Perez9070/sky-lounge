@@ -33,15 +33,20 @@ loadLocalEnv();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, "public");
+const imagesDir = path.join(publicDir, "images");
 const supportEmail = process.env.SUPPORT_EMAIL || "perezmainaabel@gmail.com";
 const web3FormsAccessKey = process.env.WEB3FORMS_ACCESS_KEY;
 
 app.use(express.json({ limit: "20kb" }));
 app.use(express.static(publicDir));
-app.use("/images", express.static(path.join(__dirname, "images")));
+app.use("/images", express.static(imagesDir));
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(publicDir, "index.html"));
+});
+
+app.get("/health", (req, res) => {
+  res.json({ status: "ok" });
 });
 
 app.post("/api/support-message", async (req, res) => {
