@@ -1,5 +1,6 @@
 const express = require("express");
 const fs = require("fs");
+const nodemailer = require("nodemailer");
 const path = require("path");
 
 function loadLocalEnv() {
@@ -35,7 +36,12 @@ const PORT = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, "public");
 const imagesDir = path.join(publicDir, "images");
 const supportEmail = process.env.SUPPORT_EMAIL || "perezmainaabel@gmail.com";
-const web3FormsAccessKey = process.env.WEB3FORMS_ACCESS_KEY;
+const smtpHost = process.env.SMTP_HOST || "smtp.gmail.com";
+const smtpPort = Number(process.env.SMTP_PORT || 587);
+const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
+const smtpUser = process.env.SMTP_USER;
+const smtpPass = process.env.SMTP_PASS?.replace(/\s/g, "");
+const emailFromName = process.env.EMAIL_FROM_NAME || "Flight Control Website";
 
 app.use(express.json({ limit: "20kb" }));
 app.use(express.static(publicDir));
@@ -70,52 +76,67 @@ app.post("/api/support-message", async (req, res) => {
     });
   }
 
-  if (!web3FormsAccessKey) {
+  if (!smtpUser || !smtpPass) {
     return res.status(503).json({
       success: false,
-      message: "Email delivery is not configured yet. Add WEB3FORMS_ACCESS_KEY to the server environment."
+      message: "Email delivery is not configured yet. Add SMTP_USER and SMTP_PASS to the server environment."
     });
   }
 
   try {
-    const response = await fetch("https://api.web3forms.com/submit", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json"
-      },
-      body: JSON.stringify({
-        access_key: web3FormsAccessKey,
-        subject: "Flight Control customer support question",
-        from_name: "Flight Control Website Chat",
-        email: trimmedEmail,
-        replyto: trimmedEmail,
-        customer_email: trimmedEmail,
-        support_email: supportEmail,
-        page: safePageUrl,
-        message: trimmedQuestion
-      })
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: smtpPort,
+      secure: smtpSecure,
+      auth: {
+        user: smtpUser,
+        pass: smtpPass
+      }
     });
-    const data = await response.json().catch(() => ({}));
 
-    if (!response.ok || data.success === false) {
-      return res.status(response.status || 502).json({
-        success: false,
-        message: data.message || "Email provider could not send this message."
-      });
-    }
+    await transporter.sendMail({
+      from: `"${emailFromName}" <${smtpUser}>`,
+      to: supportEmail,
+      replyTo: trimmedEmail,
+      subject: "Flight Control customer support question",
+      text: [
+        "A customer asked this question in the website chat:",
+        "",
+        trimmedQuestion,
+        "",
+        `Customer email: ${trimmedEmail}`,
+        `Page: ${safePageUrl || "Not provided"}`
+      ].join("\n"),
+      html: `
+        <p>A customer asked this question in the website chat:</p>
+        <blockquote>${escapeHtml(trimmedQuestion).replace(/\n/g, "<br>")}</blockquote>
+        <p><strong>Customer email:</strong> ${escapeHtml(trimmedEmail)}</p>
+        <p><strong>Page:</strong> ${escapeHtml(safePageUrl || "Not provided")}</p>
+      `
+    });
 
     return res.json({
       success: true,
       message: "Your question was sent to Flight Control support."
     });
   } catch (error) {
+    console.error("Email delivery failed:", error);
+
     return res.status(502).json({
       success: false,
       message: "Email delivery failed. Please try again."
     });
   }
 });
+
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);

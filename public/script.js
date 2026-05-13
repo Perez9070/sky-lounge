@@ -332,8 +332,7 @@ function addSupportEmailAction(messages, question) {
     status.textContent = "Sending to Flight Control support...";
 
     try {
-      // const response = await fetch("/api/support-message", {
-      fetch("https://sky-lounge-ibxx.onrender.com/api/support-message", {
+      const response = await fetch("/api/support-message", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"

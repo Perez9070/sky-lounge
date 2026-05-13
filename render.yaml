@@ -8,3 +8,17 @@ services:
     envVars:
       - key: NODE_VERSION
         value: "24"
+      - key: SUPPORT_EMAIL
+        value: perezmainaabel@gmail.com
+      - key: SMTP_HOST
+        value: smtp.gmail.com
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: EMAIL_FROM_NAME
+        value: Flight Control Website
