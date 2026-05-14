@@ -683,6 +683,76 @@ main {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.contact-form {
+  border-top: 1px solid rgba(214, 183, 108, 0.28);
+  display: grid;
+  gap: 14px;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding-top: 8px;
+}
+
+.contact-form label {
+  color: #d8c99f;
+  display: grid;
+  font-family: Arial, sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  gap: 8px;
+  text-transform: uppercase;
+}
+
+.contact-form-issue,
+.contact-form button,
+.contact-form-status {
+  grid-column: 1 / -1;
+}
+
+.contact-form input,
+.contact-form textarea {
+  background: #fffaf0;
+  border: 1px solid #d8c99f;
+  border-radius: 4px;
+  color: #17202c;
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+  padding: 12px;
+  width: 100%;
+}
+
+.contact-form textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+.contact-form button {
+  justify-self: start;
+  margin-top: 0;
+}
+
+.contact-form button:disabled {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.contact-form-status {
+  color: rgba(255, 247, 232, 0.76);
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 20px;
+}
+
+.contact-form-status.success {
+  color: #8de0a4;
+  font-weight: 700;
+}
+
+.contact-form-status.error {
+  color: #ffb4a8;
+  font-weight: 700;
+}
+
 .contact-details {
   color: rgba(255, 247, 232, 0.8);
   line-height: 1.8;
@@ -1357,6 +1427,7 @@ body.home-page:not(.dark-mode) .contact-details,
 body.home-page:not(.dark-mode) .service-grid p,
 body.info-page:not(.dark-mode) .about-copy,
 body.info-page:not(.dark-mode) .contact-details,
+body.info-page:not(.dark-mode) .contact-form-status,
 body.info-page:not(.dark-mode) .service-grid p {
   color: #5f6875;
 }
@@ -1391,6 +1462,22 @@ body.home-page:not(.dark-mode) .market-band,
 body.home-page:not(.dark-mode) .card {
   background: rgba(255, 252, 244, 0.88);
   color: #18202b;
+}
+
+body.info-page:not(.dark-mode) .contact-form {
+  border-top-color: rgba(176, 141, 60, 0.28);
+}
+
+body.info-page:not(.dark-mode) .contact-form label {
+  color: #6f5b2a;
+}
+
+body.info-page:not(.dark-mode) .contact-form-status.success {
+  color: #256a3d;
+}
+
+body.info-page:not(.dark-mode) .contact-form-status.error {
+  color: #9e2f2f;
 }
 
 body.dark-mode {
@@ -1513,6 +1600,13 @@ body.dark-mode .support-escalation-status {
 
 body.dark-mode .support-escalation input {
   background: #202733;
+  border-color: #3a4554;
+  color: #eef3f8;
+}
+
+body.dark-mode .contact-form input,
+body.dark-mode .contact-form textarea {
+  background: #14181f;
   border-color: #3a4554;
   color: #eef3f8;
 }

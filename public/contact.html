@@ -33,6 +33,26 @@
         <p>Phone: <a href="tel:+254740218358">+254 740 218 358</a></p>
         <p>Location: Nairobi, Kenya</p>
       </div>
+      <form class="contact-form" aria-label="Contact Flight Control">
+        <label>
+          Full name
+          <input type="text" name="name" autocomplete="name" required>
+        </label>
+        <label>
+          Email
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+        <label>
+          Phone
+          <input type="tel" name="phone" autocomplete="tel" required>
+        </label>
+        <label class="contact-form-issue">
+          Issue
+          <textarea name="issue" rows="5" required></textarea>
+        </label>
+        <button type="submit">Send Issue</button>
+        <p class="contact-form-status" aria-live="polite"></p>
+      </form>
     </section>
   </main>
 

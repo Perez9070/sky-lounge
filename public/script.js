@@ -3,6 +3,7 @@ const savedTheme = localStorage.getItem("theme");
 const button = document.getElementById("btn");
 const loginForms = document.querySelectorAll(".auth-login-form");
 const signupForm = document.querySelector(".auth-signup-form");
+const contactForm = document.querySelector(".contact-form");
 const logoutLinks = document.querySelectorAll(".logout-link");
 const quoteButton = document.getElementById("quoteBtn");
 const heroQuoteButton = document.getElementById("heroQuoteBtn");
@@ -445,6 +446,70 @@ function addSupportEmailAction(messages, question) {
   messages.scrollTop = messages.scrollHeight;
 }
 
+function initContactForm() {
+  if (!contactForm) {
+    return;
+  }
+
+  const status = contactForm.querySelector(".contact-form-status");
+  const submitButton = contactForm.querySelector('button[type="submit"]');
+
+  contactForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(contactForm);
+    const name = String(formData.get("name") || "").trim();
+    const email = String(formData.get("email") || "").trim();
+    const phone = String(formData.get("phone") || "").trim();
+    const issue = String(formData.get("issue") || "").trim();
+
+    if (!name || !email || !phone || !issue) {
+      status.textContent = "Please fill in your contact details and issue.";
+      status.className = "contact-form-status error";
+      return;
+    }
+
+    submitButton.disabled = true;
+    status.textContent = "Sending your issue to Flight Control...";
+    status.className = "contact-form-status";
+
+    try {
+      const response = await fetch("/api/support-message", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          customerEmail: email,
+          pageUrl: window.location.href,
+          question: [
+            `Name: ${name}`,
+            `Email: ${email}`,
+            `Phone: ${phone}`,
+            "",
+            "Issue:",
+            issue
+          ].join("\n")
+        })
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.success === false) {
+        throw new Error(data.message || "Your issue could not be sent.");
+      }
+
+      status.textContent = data.message || "Sent. Flight Control will follow up.";
+      status.className = "contact-form-status success";
+      contactForm.reset();
+    } catch (error) {
+      status.textContent = error.message || "Your issue could not be sent. Please try email or phone.";
+      status.className = "contact-form-status error";
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+}
+
 function askSupportQuestion(messages, input, question) {
   const trimmedQuestion = question.trim();
 
@@ -613,12 +678,6 @@ if (heroQuoteButton) {
   heroQuoteButton.addEventListener("click", copyHeroRouteToEstimator);
 }
 
-[routeFrom, routeTo, routeAircraftClass, routePassengers, routeCurrency].forEach((field) => {
-  field?.addEventListener("change", calculateQuote);
-});
-
-routePassengers?.addEventListener("input", calculateQuote);
-
 [heroFrom, heroTo, heroAircraftClass, heroCurrency].forEach((field) => {
   field?.addEventListener("change", () => {
     if (field === heroCurrency) {
@@ -677,3 +736,4 @@ if (isSignedIn) {
   initSupportAssistant();
 }
 initHomeNavHighlight();
+initContactForm();
