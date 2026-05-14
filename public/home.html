@@ -6,15 +6,15 @@
   <title>Flight Control | Private Aviation</title>
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="home-page">
   <header class="site-header">
     <h1>Flight Control</h1>
     <nav>
      <!-- <img width="30" height="30" src="https://img.icons8.com/ios-glyphs/30/github.png" alt="github"/> </a> -->
       <a href="#home">Home</a>
       <a href="#fleet">Fleet</a>
-      <a href="#about">About</a>
-      <a href="#contact">Contact</a>
+      <a href="about.html">About</a>
+      <a href="contact.html">Contact</a>
       <a href="index.html" class="logout-link">Logout</a>
     </nav>
     <label class="switch" aria-label="Toggle dark mode">
@@ -32,7 +32,7 @@
       </p>
       <div class="hero-actions">
       <a class="button-link primary-action" href="aircraft.html">Explore Aircraft</a>
-        <a class="button-link secondary-action" href="#contact">Request Consultation</a>
+        <a class="button-link secondary-action" href="contact.html">Request Consultation</a>
       </div>
     </div>
 
@@ -113,7 +113,7 @@
         </label>
         <label>
           Passengers
-          <input id="routePassengers" type="number" value="4" min="1" max="50">
+          <input id="routePassengers" type="number" value="0" min="0" max="50" placeholder="0">
         </label>
         <label>
           Currency
@@ -124,8 +124,8 @@
 
       <div class="price-result" id="priceResult" aria-live="polite">
         <span class="panel-label">Estimated charter quote</span>
-        <strong>Select a route</strong>
-        <p>Your price range will appear here.</p>
+        <strong>0.000</strong>
+        <p>Edit passengers to calculate your price range.</p>
       </div>
     </section>
 
@@ -192,46 +192,6 @@
       </div>
     </section>
 
-    <section class="about-luxury" id="about">
-      <div>
-        <p class="eyebrow">Aviation intelligence</p>
-        <h2>Designed for smoother decisions before takeoff.</h2>
-      </div>
-      <div class="about-copy">
-        <p>
-          Flight Control is dedicated to aviation technology, aircraft education, and control systems that make flight planning feel clear, safe, and beautifully organized.
-        </p>
-        <p>
-          Inspired by aviation pioneers, we combine precision, reliability, and a refined user experience for pilots, engineers, students, and aviation enthusiasts.
-        </p>
-      </div>
-      <div class="service-grid">
-        <article>
-          <h3>Flight Management</h3>
-          <p>Modern tools and resources for understanding aircraft performance and operational planning.</p>
-        </article>
-        <article>
-          <h3>Training Resources</h3>
-          <p>Accessible aviation knowledge for learners and professionals building confidence in the field.</p>
-        </article>
-        <article>
-          <h3>Safety Focus</h3>
-          <p>A calm, precise approach to information that supports better aviation decisions.</p>
-        </article>
-      </div>
-    </section>
-
-    <section class="contact-panel" id="contact">
-      <div>
-        <p class="eyebrow">Concierge desk</p>
-        <h2>Start your next aviation conversation.</h2>
-      </div>
-      <div class="contact-details">
-        <p>Email: <a href="mailto:perezmainaabel@gmail.com">perezmainaabel@gmail.com</a></p>
-        <p>Phone: <a href="tel:+254740218358">+254 740 218 358</a></p>
-        <p>Location: Nairobi, Kenya</p>
-      </div>
-    </section>
   </main>
 
   <script src="script.js"></script>

@@ -17,7 +17,7 @@ const routeCurrency = document.getElementById("routeCurrency");
 const heroCurrency = document.getElementById("heroCurrency");
 const priceResult = document.getElementById("priceResult");
 const pageName = window.location.pathname.split("/").pop() || "index.html";
-const protectedPages = ["home.html", "aircraft.html", "plane.html"];
+const protectedPages = ["home.html", "aircraft.html", "plane.html", "about.html", "contact.html"];
 const publicAuthPages = ["index.html", "login.html", "signup.html"];
 const isSignedIn = localStorage.getItem("flightControlSignedIn") === "true";
 const accountStorageKey = "flightControlAccount";
@@ -70,7 +70,7 @@ const supportPrompts = [
 const supportQuickLinks = isSignedIn ? [
   { label: "Open route planner", href: "home.html#planner" },
   { label: "View aircraft", href: "aircraft.html" },
-  { label: "Contact desk", href: "home.html#contact" }
+  { label: "Contact desk", href: "contact.html" }
 ] : [
   { label: "Request access", href: "signup.html" },
   { label: "Sign in", href: "login.html" },
@@ -168,6 +168,18 @@ function formatMoney(value, currencyCode) {
   }).format(value * currency.rate);
 }
 
+function showEmptyQuote() {
+  if (!priceResult) {
+    return;
+  }
+
+  priceResult.innerHTML = `
+    <span class="panel-label">Estimated charter quote</span>
+    <strong>0.000</strong>
+    <p>Edit passengers to calculate your price range.</p>
+  `;
+}
+
 function calculateQuote() {
   if (!routeFrom || !routeTo || !routeAircraftClass || !routePassengers || !priceResult) {
     return;
@@ -176,10 +188,15 @@ function calculateQuote() {
   const from = routeCities[Number(routeFrom.value)];
   const to = routeCities[Number(routeTo.value)];
   const pricing = aircraftPricing[routeAircraftClass.value];
-  const passengers = Number(routePassengers.value) || 1;
+  const passengers = Number(routePassengers.value);
   const currencyCode = routeCurrency?.value || localStorage.getItem(currencyStorageKey) || "USD";
 
   saveCurrencyPreference(currencyCode);
+
+  if (!Number.isFinite(passengers) || passengers <= 0) {
+    showEmptyQuote();
+    return;
+  }
 
   if (from === to) {
     priceResult.innerHTML = `
@@ -224,6 +241,70 @@ function copyHeroRouteToEstimator() {
   saveCurrencyPreference(heroCurrency?.value || "USD");
   calculateQuote();
   document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" });
+}
+
+function initHomeNavHighlight() {
+  const navLinks = Array.from(document.querySelectorAll(".home-page .site-header nav a[href^='#']"));
+
+  if (!navLinks.length) {
+    return;
+  }
+
+  const sectionLinks = navLinks
+    .map((link) => ({
+      link,
+      section: document.querySelector(link.getAttribute("href"))
+    }))
+    .filter((item) => item.section);
+
+  function setActiveLink(id) {
+    sectionLinks.forEach(({ link, section }) => {
+      const isActive = section.id === id;
+
+      link.classList.toggle("is-active", isActive);
+
+      if (isActive) {
+        link.setAttribute("aria-current", "page");
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    });
+  }
+
+  function updateActiveLink() {
+    const headerOffset = document.querySelector(".site-header")?.offsetHeight || 0;
+    const scrollPosition = window.scrollY + headerOffset + 80;
+    let currentId = sectionLinks[0].section.id;
+
+    sectionLinks.forEach(({ section }) => {
+      if (section.offsetTop <= scrollPosition) {
+        currentId = section.id;
+      }
+    });
+
+    setActiveLink(currentId);
+  }
+
+  if ("IntersectionObserver" in window) {
+    const observer = new IntersectionObserver((entries) => {
+      const visibleEntry = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+      if (visibleEntry) {
+        setActiveLink(visibleEntry.target.id);
+      }
+    }, {
+      rootMargin: "-30% 0px -55% 0px",
+      threshold: [0.1, 0.3, 0.6]
+    });
+
+    sectionLinks.forEach(({ section }) => observer.observe(section));
+  }
+
+  window.addEventListener("scroll", updateActiveLink, { passive: true });
+  window.addEventListener("resize", updateActiveLink);
+  updateActiveLink();
 }
 
 function getSupportReply(message) {
@@ -525,7 +606,7 @@ populateCurrencySelect(heroCurrency, savedCurrency);
 
 if (quoteButton) {
   quoteButton.addEventListener("click", calculateQuote);
-  calculateQuote();
+  showEmptyQuote();
 }
 
 if (heroQuoteButton) {
@@ -535,6 +616,8 @@ if (heroQuoteButton) {
 [routeFrom, routeTo, routeAircraftClass, routePassengers, routeCurrency].forEach((field) => {
   field?.addEventListener("change", calculateQuote);
 });
+
+routePassengers?.addEventListener("input", calculateQuote);
 
 [heroFrom, heroTo, heroAircraftClass, heroCurrency].forEach((field) => {
   field?.addEventListener("change", () => {
@@ -590,4 +673,7 @@ logoutLinks.forEach((link) => {
   });
 });
 
-initSupportAssistant();
+if (isSignedIn) {
+  initSupportAssistant();
+}
+initHomeNavHighlight();

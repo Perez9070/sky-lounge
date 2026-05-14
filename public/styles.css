@@ -63,18 +63,26 @@ nav {
 }
 
 nav a {
+  border-bottom: 2px solid transparent;
   color: #f8efe1;
   margin-left: 18px;
+  padding-bottom: 6px;
   text-decoration: none;
   font-family: Arial, sans-serif;
   font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
+  transition: border-color 0.2s, color 0.2s;
 }
 
 nav a:hover {
   color: #d6b76c;
   text-decoration: none;
+}
+
+nav a.is-active {
+  border-bottom-color: currentColor;
+  color: #d6b76c;
 }
 
 main {
@@ -432,7 +440,8 @@ main {
 
 .hangar-main,
 .dossier-main,
-.auth-main {
+.auth-main,
+.info-main {
   justify-content: flex-start;
 }
 
@@ -505,10 +514,6 @@ main {
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.28);
   display: flex;
   flex-direction: column;
-}
-
-.premium-aircraft-card.featured-aircraft {
-  transform: translateY(-18px);
 }
 
 .aircraft-card img {
@@ -1295,6 +1300,99 @@ button:hover {
   padding: 11px 14px;
 }
 
+body.home-page:not(.dark-mode),
+body.info-page:not(.dark-mode) {
+  background:
+    linear-gradient(rgba(235, 230, 219, 0.62), rgba(235, 230, 219, 0.74)),
+    url("images/airport-background.jpg");
+  background-attachment: fixed;
+  background-position: center;
+  background-size: cover;
+  color: #18202b;
+}
+
+body.home-page:not(.dark-mode) header,
+body.info-page:not(.dark-mode) header {
+  background: rgba(255, 252, 244, 0.86);
+  border-bottom-color: rgba(176, 141, 60, 0.28);
+  color: #18202b;
+}
+
+body.home-page:not(.dark-mode) nav a,
+body.info-page:not(.dark-mode) nav a {
+  color: #18202b;
+}
+
+body.home-page:not(.dark-mode) nav a:hover,
+body.info-page:not(.dark-mode) nav a:hover {
+  color: #9b7830;
+}
+
+body.home-page:not(.dark-mode) nav a.is-active,
+body.info-page:not(.dark-mode) nav a.is-active {
+  color: #9b7830;
+}
+
+body.home-page:not(.dark-mode) .luxury-hero {
+  background:
+    linear-gradient(90deg, rgba(255, 252, 244, 0.82) 0%, rgba(255, 252, 244, 0.58) 52%, rgba(255, 252, 244, 0.1) 100%),
+    url("images/airport-background.jpg");
+  background-position: center;
+  background-size: cover;
+}
+
+body.home-page:not(.dark-mode) .luxury-hero h2,
+body.home-page:not(.dark-mode) .route-copy h2,
+body.home-page:not(.dark-mode) .about-luxury h2,
+body.home-page:not(.dark-mode) .contact-panel h2,
+body.info-page:not(.dark-mode) .about-luxury h2,
+body.info-page:not(.dark-mode) .contact-panel h2 {
+  color: #18202b;
+}
+
+body.home-page:not(.dark-mode) .hero-copy,
+body.home-page:not(.dark-mode) .route-copy p:last-child,
+body.home-page:not(.dark-mode) .about-copy,
+body.home-page:not(.dark-mode) .contact-details,
+body.home-page:not(.dark-mode) .service-grid p,
+body.info-page:not(.dark-mode) .about-copy,
+body.info-page:not(.dark-mode) .contact-details,
+body.info-page:not(.dark-mode) .service-grid p {
+  color: #5f6875;
+}
+
+body.home-page:not(.dark-mode) .secondary-action {
+  border-color: rgba(24, 32, 43, 0.5);
+  color: #18202b;
+}
+
+body.home-page:not(.dark-mode) .stats-band,
+body.home-page:not(.dark-mode) .route-estimator,
+body.home-page:not(.dark-mode) .about-luxury,
+body.home-page:not(.dark-mode) .contact-panel,
+body.info-page:not(.dark-mode) .about-luxury,
+body.info-page:not(.dark-mode) .contact-panel {
+  background: rgba(255, 252, 244, 0.86);
+  border-color: rgba(176, 141, 60, 0.28);
+  color: #18202b;
+}
+
+body.home-page:not(.dark-mode) .stats-band div + div {
+  border-left-color: rgba(176, 141, 60, 0.22);
+}
+
+body.home-page:not(.dark-mode) .stats-band span {
+  color: #5f6875;
+}
+
+body.home-page:not(.dark-mode) .flight-panel,
+body.home-page:not(.dark-mode) .price-result,
+body.home-page:not(.dark-mode) .market-band,
+body.home-page:not(.dark-mode) .card {
+  background: rgba(255, 252, 244, 0.88);
+  color: #18202b;
+}
+
 body.dark-mode {
   background:
     linear-gradient(rgba(20, 24, 31, 0.58), rgba(20, 24, 31, 0.58)),
@@ -1471,10 +1569,6 @@ body.dark-mode .support-email-fallback {
   .auth-split,
   .reverse-auth {
     grid-template-columns: 1fr;
-  }
-
-  .premium-aircraft-card.featured-aircraft {
-    transform: none;
   }
 
   .dossier-hero,
