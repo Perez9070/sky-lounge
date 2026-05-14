@@ -88,6 +88,7 @@ app.post("/api/support-message", async (req, res) => {
         email: trimmedEmail,
         message: trimmedQuestion,
         page_url: safePageUrl || "Not provided",
+        submitted_at: new Date().toISOString(),
       }),
     });
 
