@@ -1,15 +1,15 @@
 # Web3Forms Email Setup
 
-The customer support chat and contact form send messages through the backend endpoint:
-
-```text
-POST /api/support-message
-```
-
-The backend forwards those messages to Web3Forms:
+The customer support chat and contact form send messages directly from the browser to Web3Forms:
 
 ```text
 https://api.web3forms.com/submit
+```
+
+The Express server only exposes the configured access key to the browser at:
+
+```text
+GET /api/web3forms-config
 ```
 
 ## Required Setting
@@ -22,6 +22,7 @@ WEB3FORMS_ACCESS_KEY=your_web3forms_access_key
 ```
 
 The access key controls which email address receives the form messages in Web3Forms.
+Web3Forms access keys are public form identifiers, so the browser can use this value.
 
 ## Render Setup
 
@@ -49,4 +50,4 @@ npm install
 npm start
 ```
 
-When the chatbot cannot answer a customer, or when the contact form is submitted, the site posts to `/api/support-message`. The server then sends the message to Web3Forms.
+When the chatbot cannot answer a customer, or when the contact form is submitted, the browser fetches `/api/web3forms-config` and then posts the form data directly to Web3Forms.

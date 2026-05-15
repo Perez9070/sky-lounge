@@ -692,6 +692,10 @@ main {
   padding-top: 8px;
 }
 
+.web3forms-botcheck {
+  display: none;
+}
+
 .contact-form label {
   color: #d8c99f;
   display: grid;

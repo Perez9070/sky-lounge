@@ -24,6 +24,8 @@ const isSignedIn = localStorage.getItem("flightControlSignedIn") === "true";
 const accountStorageKey = "flightControlAccount";
 const currencyStorageKey = "flightControlCurrency";
 const supportEmailAddress = "perezmainaabel@gmail.com";
+const web3FormsEndpoint = "https://api.web3forms.com/submit";
+let web3FormsAccessKeyPromise;
 const routeCities = [
   { city: "Nairobi", country: "Kenya", lat: -1.286, lon: 36.817 },
   { city: "Cape Town", country: "South Africa", lat: -33.925, lon: 18.424 },
@@ -376,6 +378,58 @@ function getSupportEmailHref(question) {
   return `mailto:${supportEmailAddress}?subject=${subject}&body=${body}`;
 }
 
+async function getWeb3FormsAccessKey() {
+  if (!web3FormsAccessKeyPromise) {
+    web3FormsAccessKeyPromise = fetch("/api/web3forms-config", {
+      headers: {
+        Accept: "application/json"
+      }
+    })
+      .then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok || !data.accessKey) {
+          throw new Error(data.message || "Web3Forms key is missing.");
+        }
+
+        return data.accessKey;
+      })
+      .catch((error) => {
+        web3FormsAccessKeyPromise = null;
+        throw error;
+      });
+  }
+
+  return web3FormsAccessKeyPromise;
+}
+
+function getWeb3FormsMessage(data, fallback) {
+  return data?.message || data?.body?.message || fallback;
+}
+
+async function submitToWeb3Forms(payload) {
+  const accessKey = await getWeb3FormsAccessKey();
+  const response = await fetch(web3FormsEndpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json"
+    },
+    body: JSON.stringify({
+      access_key: accessKey,
+      ...payload,
+      submitted_at: new Date().toISOString()
+    })
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok || data.success === false) {
+    throw new Error(getWeb3FormsMessage(data, "Message could not be sent."));
+  }
+
+  return data;
+}
+
 function addSupportEmailAction(messages, question) {
   const savedAccount = getSavedAccount();
   const form = document.createElement("form");
@@ -414,25 +468,16 @@ function addSupportEmailAction(messages, question) {
     status.textContent = "Sending to Flight Control support...";
 
     try {
-      const response = await fetch("/api/support-message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          question,
-          customerEmail: emailInput.value,
-          pageUrl: window.location.href
-        })
+      const data = await submitToWeb3Forms({
+        subject: "New Support Message from Flight Control",
+        from_name: "Flight Control Support",
+        email: emailInput.value,
+        message: question,
+        page_url: window.location.href
       });
-      const data = await response.json().catch(() => ({}));
-
-      if (!response.ok || data.success === false) {
-        throw new Error(data.message || "Message could not be sent.");
-      }
 
       status.className = "support-escalation-status success";
-      status.textContent = data.message || "Sent. Flight Control support will follow up by email.";
+      status.textContent = getWeb3FormsMessage(data, "Sent. Flight Control support will follow up by email.");
       emailInput.disabled = true;
       fallback.style.display = "none";
     } catch (error) {
@@ -453,6 +498,18 @@ function initContactForm() {
 
   const status = contactForm.querySelector(".contact-form-status");
   const submitButton = contactForm.querySelector('button[type="submit"]');
+  const accessKeyInput = contactForm.querySelector('input[name="access_key"]');
+
+  contactForm.action = web3FormsEndpoint;
+  contactForm.method = "POST";
+  getWeb3FormsAccessKey()
+    .then((accessKey) => {
+      if (accessKeyInput) {
+        accessKeyInput.value = accessKey;
+        accessKeyInput.defaultValue = accessKey;
+      }
+    })
+    .catch(() => {});
 
   contactForm.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -461,7 +518,12 @@ function initContactForm() {
     const name = String(formData.get("name") || "").trim();
     const email = String(formData.get("email") || "").trim();
     const phone = String(formData.get("phone") || "").trim();
-    const issue = String(formData.get("issue") || "").trim();
+    const issue = String(formData.get("message") || formData.get("issue") || "").trim();
+    const botcheck = String(formData.get("botcheck") || "").trim();
+
+    if (botcheck) {
+      return;
+    }
 
     if (!name || !email || !phone || !issue) {
       status.textContent = "Please fill in your contact details and issue.";
@@ -474,31 +536,17 @@ function initContactForm() {
     status.className = "contact-form-status";
 
     try {
-      const response = await fetch("/api/support-message", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          customerEmail: email,
-          pageUrl: window.location.href,
-          question: [
-            `Name: ${name}`,
-            `Email: ${email}`,
-            `Phone: ${phone}`,
-            "",
-            "Issue:",
-            issue
-          ].join("\n")
-        })
+      const data = await submitToWeb3Forms({
+        subject: String(formData.get("subject") || "New Contact Issue from Flight Control"),
+        from_name: String(formData.get("from_name") || "Flight Control Contact Form"),
+        name,
+        email,
+        phone,
+        message: issue,
+        page_url: window.location.href
       });
-      const data = await response.json().catch(() => ({}));
 
-      if (!response.ok || data.success === false) {
-        throw new Error(data.message || "Your issue could not be sent.");
-      }
-
-      status.textContent = data.message || "Sent. Flight Control will follow up.";
+      status.textContent = getWeb3FormsMessage(data, "Sent. Flight Control will follow up.");
       status.className = "contact-form-status success";
       contactForm.reset();
     } catch (error) {

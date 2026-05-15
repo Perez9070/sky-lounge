@@ -33,7 +33,11 @@
         <p>Phone: <a href="tel:+254740218358">+254 740 218 358</a></p>
         <p>Location: Nairobi, Kenya</p>
       </div>
-      <form class="contact-form" aria-label="Contact Flight Control">
+      <form class="contact-form" action="https://api.web3forms.com/submit" method="POST" aria-label="Contact Flight Control">
+        <input type="hidden" name="access_key" value="">
+        <input type="hidden" name="subject" value="New Contact Issue from Flight Control">
+        <input type="hidden" name="from_name" value="Flight Control Contact Form">
+        <input type="checkbox" name="botcheck" class="web3forms-botcheck" tabindex="-1" autocomplete="off">
         <label>
           Full name
           <input type="text" name="name" autocomplete="name" required>
@@ -48,7 +52,7 @@
         </label>
         <label class="contact-form-issue">
           Issue
-          <textarea name="issue" rows="5" required></textarea>
+          <textarea name="message" rows="5" required></textarea>
         </label>
         <button type="submit">Send Issue</button>
         <p class="contact-form-status" aria-live="polite"></p>

@@ -29,10 +29,10 @@ const PORT = process.env.PORT || 3000;
 const publicDir = path.join(__dirname, "public");
 const imagesDir = path.join(publicDir, "images");
 
-// Web3Forms Access Key from your .env
+// Web3Forms access keys are public form identifiers, but keep the value in
+// Render/local env so deployments can be configured without editing HTML.
 const web3FormsKey = process.env.WEB3FORMS_ACCESS_KEY;
 
-app.use(express.json({ limit: "20kb" }));
 app.use(express.static(publicDir));
 app.use("/images", express.static(imagesDir));
 
@@ -44,28 +44,7 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-// Backend route to handle the support form via Web3Forms API
-app.post("/api/support-message", async (req, res) => {
-  const { question, customerEmail, pageUrl } = req.body || {};
-  const trimmedQuestion = typeof question === "string" ? question.trim() : "";
-  const trimmedEmail = typeof customerEmail === "string" ? customerEmail.trim() : "";
-  const safePageUrl = typeof pageUrl === "string" ? pageUrl.trim() : "";
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-  if (!trimmedQuestion || trimmedQuestion.length > 1200) {
-    return res.status(400).json({
-      success: false,
-      message: "Please send a question between 1 and 1200 characters.",
-    });
-  }
-
-  if (!emailPattern.test(trimmedEmail)) {
-    return res.status(400).json({
-      success: false,
-      message: "Please provide a valid customer email address.",
-    });
-  }
-
+app.get("/api/web3forms-config", (req, res) => {
   if (!web3FormsKey) {
     return res.status(503).json({
       success: false,
@@ -73,43 +52,11 @@ app.post("/api/support-message", async (req, res) => {
     });
   }
 
-  try {
-    // Send data to Web3Forms using standard fetch (HTTP)
-    const web3formskey = process.env.WEB3FORMS_ACCESS_KEY;
-    const response = await fetch("https://api.web3forms.com/submit", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        access_key: web3FormsKey,
-        subject: "New Support Message from Flight Control",
-        from_name: "Flight Control Support",
-        email: trimmedEmail,
-        message: trimmedQuestion,
-        page_url: safePageUrl || "Not provided",
-        submitted_at: new Date().toISOString(),
-      }),
-    });
-
-    const result = await response.json();
-
-    if (result.success) {
-      return res.json({
-        success: true,
-        message: "Your question was sent to Flight Control support.",
-      });
-    } else {
-      throw new Error(result.message || "Web3Forms API error");
-    }
-  } catch (error) {
-    console.error("Email delivery via Web3Forms failed:", error);
-    return res.status(502).json({
-      success: false,
-      message: "Email delivery failed. Please try again later.",
-    });
-  }
+  res.set("Cache-Control", "no-store");
+  res.json({
+    success: true,
+    accessKey: web3FormsKey,
+  });
 });
 
 app.listen(PORT, () => {
