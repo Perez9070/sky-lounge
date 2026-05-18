@@ -45,10 +45,10 @@ const emailFromName = process.env.EMAIL_FROM_NAME || "Flight Control Website";
 const supportMessageRequests = new Map();
 const supportWindowMs = 15 * 60 * 1000;
 const supportWindowLimit = 8;
+const allowedMethods = new Set(["GET", "HEAD", "POST", "OPTIONS"]);
 
 app.disable("x-powered-by");
 app.set("trust proxy", 1);
-app.use(express.json({ limit: "20kb" }));
 app.use((req, res, next) => {
   res.setHeader("Content-Security-Policy", [
     "default-src 'self'",
@@ -61,13 +61,15 @@ app.use((req, res, next) => {
     "form-action 'self'",
     "base-uri 'self'",
     "object-src 'none'",
-    "frame-ancestors 'self'"
+    "frame-ancestors 'none'"
   ].join("; "));
   res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Cross-Origin-Resource-Policy", "same-origin");
   res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
   res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
   res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
 
   if (req.secure || req.headers["x-forwarded-proto"] === "https") {
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
@@ -75,10 +77,34 @@ app.use((req, res, next) => {
 
   next();
 });
-app.use(express.static(publicDir));
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    res.setHeader("Allow", Array.from(allowedMethods).join(", "));
+    return res.sendStatus(204);
+  }
+
+  if (!allowedMethods.has(req.method)) {
+    res.setHeader("Allow", Array.from(allowedMethods).join(", "));
+    return res.status(405).json({
+      success: false,
+      message: "Method not allowed."
+    });
+  }
+
+  return next();
+});
+app.use(express.json({ limit: "20kb", type: "application/json" }));
+app.use(express.static(publicDir, {
+  setHeaders(res, filePath) {
+    if (path.extname(filePath) === ".html") {
+      res.setHeader("Cache-Control", "no-store");
+    }
+  }
+}));
 app.use("/images", express.static(imagesDir));
 
 app.get("/", (req, res) => {
+  res.setHeader("Cache-Control", "no-store");
   res.sendFile(path.join(publicDir, "index.html"));
 });
 
@@ -86,7 +112,7 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.post("/api/support-message", limitSupportMessages, async (req, res) => {
+app.post("/api/support-message", requireSameOrigin, requireJsonBody, limitSupportMessages, async (req, res) => {
   const { question, customerEmail, pageUrl } = req.body || {};
   const trimmedQuestion = typeof question === "string" ? question.trim() : "";
   const trimmedEmail = typeof customerEmail === "string" ? customerEmail.trim() : "";
@@ -118,6 +144,13 @@ app.post("/api/support-message", limitSupportMessages, async (req, res) => {
     return res.status(400).json({
       success: false,
       message: "The page URL is too long."
+    });
+  }
+
+  if (safePageUrl && !isSameOriginUrl(safePageUrl, req)) {
+    return res.status(400).json({
+      success: false,
+      message: "The page URL is not allowed."
     });
   }
 
@@ -167,6 +200,59 @@ app.post("/api/support-message", limitSupportMessages, async (req, res) => {
   }
 });
 
+function requireJsonBody(req, res, next) {
+  if (!req.is("application/json")) {
+    return res.status(415).json({
+      success: false,
+      message: "Requests must be sent as JSON."
+    });
+  }
+
+  return next();
+}
+
+function requireSameOrigin(req, res, next) {
+  const fetchSite = req.get("sec-fetch-site");
+
+  if (fetchSite && !["same-origin", "same-site", "none"].includes(fetchSite)) {
+    return res.status(403).json({
+      success: false,
+      message: "Cross-site requests are not allowed."
+    });
+  }
+
+  const origin = req.get("origin");
+
+  if (origin && !isSameOriginUrl(origin, req)) {
+    return res.status(403).json({
+      success: false,
+      message: "Cross-origin requests are not allowed."
+    });
+  }
+
+  const referer = req.get("referer");
+
+  if (!origin && referer && !isSameOriginUrl(referer, req)) {
+    return res.status(403).json({
+      success: false,
+      message: "Cross-origin requests are not allowed."
+    });
+  }
+
+  return next();
+}
+
+function isSameOriginUrl(value, req) {
+  try {
+    const candidate = new URL(value);
+    const expected = new URL(`${req.protocol}://${req.get("host")}`);
+
+    return candidate.protocol === expected.protocol && candidate.host === expected.host;
+  } catch (error) {
+    return false;
+  }
+}
+
 function limitSupportMessages(req, res, next) {
   const now = Date.now();
   const key = req.ip || req.headers["x-forwarded-for"] || "unknown";
@@ -204,6 +290,22 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 }
+
+app.use((err, req, res, next) => {
+  if (err?.type === "entity.parse.failed") {
+    return res.status(400).json({
+      success: false,
+      message: "Request JSON could not be parsed."
+    });
+  }
+
+  console.error("Unhandled request error:", err);
+
+  return res.status(500).json({
+    success: false,
+    message: "The request could not be completed."
+  });
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
