@@ -193,6 +193,58 @@ main {
   color: #fff7e8;
 }
 
+.loading-circle {
+  animation: loadingCircleSpin 0.75s linear infinite;
+  border: 3px solid rgba(214, 183, 108, 0.24);
+  border-top-color: #d6b76c;
+  border-radius: 50%;
+  display: inline-block;
+  height: 22px;
+  width: 22px;
+}
+
+.loading-circle.small {
+  border-width: 2px;
+  height: 14px;
+  width: 14px;
+}
+
+.loading-circle.large {
+  height: 42px;
+  width: 42px;
+}
+
+.loading-inline {
+  align-items: center;
+  display: inline-flex;
+  gap: 9px;
+}
+
+.loading-state {
+  align-items: center;
+  display: grid;
+  justify-items: start;
+  min-height: 126px;
+}
+
+.price-result .loading-state strong,
+.loading-state strong {
+  align-items: center;
+  display: inline-flex;
+  gap: 14px;
+}
+
+button .loading-circle.small {
+  border-color: rgba(16, 23, 33, 0.24);
+  border-top-color: #101721;
+}
+
+@keyframes loadingCircleSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .flight-panel {
   background: rgba(255, 252, 244, 0.94);
   border: 1px solid rgba(214, 183, 108, 0.44);
@@ -1218,6 +1270,12 @@ button:hover {
   border: 1px solid rgba(214, 183, 108, 0.28);
   color: #25303d;
   justify-self: start;
+}
+
+.support-message.loading-message {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
 }
 
 .support-message.customer {

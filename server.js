@@ -65,7 +65,7 @@ app.post("/api/support-message", async (req, res) => {
   if (!trimmedQuestion || trimmedQuestion.length > 1200) {
     return res.status(400).json({
       success: false,
-      message: "Please send a question between 1 and 1200 characters."
+      message: "Please send a request between 1 and 1200 characters."
     });
   }
 
@@ -117,7 +117,7 @@ app.post("/api/support-message", async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Your question was sent to Flight Control support."
+      message: "Your request was sent to Flight Control."
     });
   } catch (error) {
     console.error("Email delivery failed:", error);

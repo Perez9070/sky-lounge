@@ -65,8 +65,8 @@ const quoteCurrencies = {
 const supportPrompts = [
   "How much does a flight cost?",
   "Which aircraft should I choose?",
-  "How do I request a quote?",
-  "How can I contact support?"
+  "How do I prepare a quote request?",
+  "How can I reach the concierge desk?"
 ];
 const supportQuickLinks = isSignedIn ? [
   { label: "Open route planner", href: "home.html#planner" },
@@ -169,22 +169,67 @@ function formatMoney(value, currencyCode) {
   }).format(value * currency.rate);
 }
 
+function setButtonLoading(buttonElement, isLoading, loadingText) {
+  if (!buttonElement) {
+    return;
+  }
+
+  if (isLoading) {
+    if (!buttonElement.dataset.defaultText) {
+      buttonElement.dataset.defaultText = buttonElement.textContent;
+    }
+
+    buttonElement.disabled = true;
+    buttonElement.innerHTML = `<span class="loading-inline"><span class="loading-circle small" aria-hidden="true"></span><span>${loadingText || buttonElement.dataset.defaultText}</span></span>`;
+    return;
+  }
+
+  buttonElement.disabled = false;
+  buttonElement.textContent = buttonElement.dataset.defaultText || buttonElement.textContent;
+}
+
+function waitForLoadingFrame() {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, 260);
+  });
+}
+
 function showEmptyQuote() {
   if (!priceResult) {
     return;
   }
 
+  priceResult.setAttribute("aria-busy", "false");
   priceResult.innerHTML = `
     <span class="panel-label">Estimated charter quote</span>
     <strong>0.000</strong>
-    <p>Edit passengers to calculate your price range.</p>
+    <p>Add passengers to calculate your planning range.</p>
   `;
 }
 
-function calculateQuote() {
+function showQuoteLoading() {
+  if (!priceResult) {
+    return;
+  }
+
+  priceResult.setAttribute("aria-busy", "true");
+  priceResult.innerHTML = `
+    <div class="loading-state" role="status" aria-live="polite">
+      <span class="panel-label">Estimated charter quote</span>
+      <strong><span class="loading-circle large" aria-hidden="true"></span> Calculating...</strong>
+      <p>Building your route estimate.</p>
+    </div>
+  `;
+}
+
+async function calculateQuote() {
   if (!routeFrom || !routeTo || !routeAircraftClass || !routePassengers || !priceResult) {
     return;
   }
+
+  showQuoteLoading();
+  setButtonLoading(quoteButton, true, "Calculating");
+  await waitForLoadingFrame();
 
   const from = routeCities[Number(routeFrom.value)];
   const to = routeCities[Number(routeTo.value)];
@@ -196,15 +241,18 @@ function calculateQuote() {
 
   if (!Number.isFinite(passengers) || passengers <= 0) {
     showEmptyQuote();
+    setButtonLoading(quoteButton, false);
     return;
   }
 
   if (from === to) {
+    priceResult.setAttribute("aria-busy", "false");
     priceResult.innerHTML = `
       <span class="panel-label">Estimated charter quote</span>
       <strong>Choose two different cities</strong>
-      <p>Luxury is lovely, but circling the same airport is not the mission.</p>
+      <p>Select a departure and destination pair to build a useful estimate.</p>
     `;
+    setButtonLoading(quoteButton, false);
     return;
   }
 
@@ -227,8 +275,10 @@ function calculateQuote() {
       <div><dt>Hourly range</dt><dd>${formatMoney(pricing.hourlyLow, currencyCode)} - ${formatMoney(pricing.hourlyHigh, currencyCode)}</dd></div>
       <div><dt>Currency</dt><dd>${currencyCode}</dd></div>
     </dl>
-    <small>Planning estimate only, benchmarked against 2026 aircraft charter ranges. Final quotes may include repositioning, landing, handling, crew, taxes, overnight costs, and real-time availability.</small>
+    <small>Planning estimate only. Final quotes may include repositioning, landing, handling, crew, taxes, overnight costs, and live aircraft availability.</small>
   `;
+  priceResult.setAttribute("aria-busy", "false");
+  setButtonLoading(quoteButton, false);
 }
 
 function copyHeroRouteToEstimator() {
@@ -240,7 +290,8 @@ function copyHeroRouteToEstimator() {
   routeTo.value = heroTo.value;
   routeAircraftClass.value = heroAircraftClass.value;
   saveCurrencyPreference(heroCurrency?.value || "USD");
-  calculateQuote();
+  setButtonLoading(heroQuoteButton, true, "Estimating");
+  calculateQuote().finally(() => setButtonLoading(heroQuoteButton, false));
   document.getElementById("planner")?.scrollIntoView({ behavior: "smooth" });
 }
 
@@ -316,27 +367,27 @@ function getSupportReply(message) {
   }
 
   if (/(price|pricing|cost|rate|quote|expensive|cheap|budget|estimate|money)/.test(question)) {
-    return "Pricing depends on route distance, aircraft class, passenger count, airport fees, crew costs, and availability. The route planner gives a market-aware estimate using 2026 hourly ranges: piston aircraft from about $140-$260/hr, turboprops from $1,800-$3,000/hr, light jets from $3,500-$6,000/hr, and ultra-long-range jets from $12,000-$20,000/hr.";
+    return "Pricing depends on route distance, aircraft class, passenger count, airport fees, crew costs, and availability. The route planner gives a planning range using hourly benchmarks: piston aircraft from about $140-$260/hr, turboprops from $1,800-$3,000/hr, light jets from $3,500-$6,000/hr, and ultra-long-range jets from $12,000-$20,000/hr.";
   }
 
   if (/(aircraft|plane|fleet|cessna|citation|phenom|challenger|gulfstream|boeing|jet|turboprop)/.test(question)) {
-    return "For short training or scenic flights, start with the Cessna 172. For regional business trips, compare the Citation CJ4 or Phenom 300. For longer premium missions, the Challenger 350 and Gulfstream G650 are stronger fits. Larger group movement should use the Boeing 737 or a custom VIP airliner quote.";
+    return "For training or local private flying, start with the Cessna 172. For regional business trips, compare the Citation CJ4 or Phenom 300. For longer premium missions, look at the Challenger 350 or Gulfstream G650. Larger groups should use the Boeing 737 profile or request a custom VIP airliner quote.";
   }
 
   if (/(route|city|from|to|distance|nairobi|dubai|london|flight time|planner)/.test(question)) {
-    return "Use the route planner on the home page to pick departure city, destination, aircraft class, passengers, and currency. It calculates distance, flight time, hourly range, and a planning quote.";
+    return "Use the route planner on the home page to choose departure city, destination, aircraft class, passengers, and currency. It calculates distance, estimated flight time, hourly range, and a planning quote.";
   }
 
   if (/(book|booking|reserve|consult|consultation|hire|charter|request)/.test(question)) {
-    return "To start a booking conversation, open the contact desk and send your route, date, passenger count, aircraft preference, and currency. The estimate is a planning guide; the final quote depends on live aircraft availability and operating fees.";
+    return "To prepare a quote request, send your route, travel date, passenger count, aircraft preference, and preferred currency through the contact desk. The estimate is a planning guide; the final quote depends on live availability and operating fees.";
   }
 
   if (/(contact|email|phone|call|whatsapp|support|help|agent|human)/.test(question)) {
-    return "You can reach the Flight Control desk by email at perezmainaabel@gmail.com or phone at +254 740 218 358. The team is based in Nairobi, Kenya.";
+    return "You can reach the Flight Control concierge desk by email at perezmainaabel@gmail.com or phone at +254 740 218 358. The desk is based in Nairobi, Kenya.";
   }
 
   if (/(login|sign in|signup|sign up|account|password|access)/.test(question)) {
-    return "Create an account from Request Access, then sign in with the same email and password. Passwords need at least 6 characters. This demo stores access locally in the browser.";
+    return "Create an account from Request Access, then sign in with the same email and password. Passwords need at least 6 characters. This demo keeps account access locally in the browser.";
   }
 
   if (/(currency|kes|usd|eur|gbp|aed|qar|shilling|dollar|pound)/.test(question)) {
@@ -347,7 +398,7 @@ function getSupportReply(message) {
     return "Aircraft shown here are planning profiles, not live dispatch records. A final charter process should confirm aircraft availability, operator approvals, maintenance status, crew, insurance, permits, and airport handling before departure.";
   }
 
-  return "I do not have the exact answer for that yet. You can send this question to the Flight Control desk and a person can follow up by email.";
+  return "I do not have that exact answer yet. Send it to the Flight Control desk and a person can follow up by email.";
 }
 
 function addSupportMessage(messages, message, sender) {
@@ -356,6 +407,17 @@ function addSupportMessage(messages, message, sender) {
   bubble.textContent = message;
   messages.appendChild(bubble);
   messages.scrollTop = messages.scrollHeight;
+}
+
+function addSupportLoadingMessage(messages) {
+  const bubble = document.createElement("div");
+  bubble.className = "support-message assistant loading-message";
+  bubble.setAttribute("role", "status");
+  bubble.innerHTML = `<span class="loading-circle small" aria-hidden="true"></span><span>Thinking...</span>`;
+  messages.appendChild(bubble);
+  messages.scrollTop = messages.scrollHeight;
+
+  return bubble;
 }
 
 function shouldSendToEmail(message) {
@@ -370,8 +432,8 @@ function shouldSendToEmail(message) {
 
 function getSupportEmailHref(question) {
   const pageUrl = window.location.href;
-  const subject = encodeURIComponent("Flight Control customer question");
-  const body = encodeURIComponent(`Hello Flight Control,\n\nA customer asked this question in the website chat:\n\n"${question}"\n\nPage: ${pageUrl}\n\nPlease follow up with them.\n`);
+  const subject = encodeURIComponent("Flight Control concierge question");
+  const body = encodeURIComponent(`Hello Flight Control,\n\nA visitor asked this question in the website chat:\n\n"${question}"\n\nPage: ${pageUrl}\n\nPlease follow up with them.\n`);
 
   return `mailto:${supportEmailAddress}?subject=${subject}&body=${body}`;
 }
@@ -382,7 +444,7 @@ function addSupportEmailAction(messages, question) {
   form.className = "support-escalation";
 
   const label = document.createElement("label");
-  label.textContent = "Your email for follow-up";
+  label.textContent = "Email for follow-up";
 
   const emailInput = document.createElement("input");
   emailInput.type = "email";
@@ -393,7 +455,7 @@ function addSupportEmailAction(messages, question) {
 
   const submitButton = document.createElement("button");
   submitButton.type = "submit";
-  submitButton.textContent = "Send to support";
+  submitButton.textContent = "Send to desk";
 
   const status = document.createElement("p");
   status.className = "support-escalation-status";
@@ -402,16 +464,16 @@ function addSupportEmailAction(messages, question) {
   const fallback = document.createElement("a");
   fallback.className = "support-email-fallback";
   fallback.href = getSupportEmailHref(question);
-  fallback.textContent = "Open email app instead";
+  fallback.textContent = "Open email instead";
 
   label.appendChild(emailInput);
   form.append(label, submitButton, status, fallback);
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    submitButton.disabled = true;
+    setButtonLoading(submitButton, true, "Sending");
     status.className = "support-escalation-status";
-    status.textContent = "Sending to Flight Control support...";
+    status.innerHTML = `<span class="loading-inline"><span class="loading-circle small" aria-hidden="true"></span><span>Sending to the Flight Control desk...</span></span>`;
 
     try {
       const response = await fetch("/api/support-message", {
@@ -432,13 +494,16 @@ function addSupportEmailAction(messages, question) {
       }
 
       status.className = "support-escalation-status success";
-      status.textContent = data.message || "Sent. Flight Control support will follow up by email.";
+      status.textContent = data.message || "Sent. Flight Control will follow up by email.";
       emailInput.disabled = true;
+      setButtonLoading(submitButton, false);
+      submitButton.disabled = true;
+      submitButton.textContent = "Sent";
       fallback.style.display = "none";
     } catch (error) {
       status.className = "support-escalation-status error";
-      status.textContent = error.message || "Message could not be sent. Please use the email app link.";
-      submitButton.disabled = false;
+      status.textContent = error.message || "Message could not be sent. Please use the email link.";
+      setButtonLoading(submitButton, false);
     }
   });
 
@@ -464,13 +529,13 @@ function initContactForm() {
     const issue = String(formData.get("issue") || "").trim();
 
     if (!name || !email || !phone || !issue) {
-      status.textContent = "Please fill in your contact details and issue.";
+      status.textContent = "Please fill in your contact details and request.";
       status.className = "contact-form-status error";
       return;
     }
 
-    submitButton.disabled = true;
-    status.textContent = "Sending your issue to Flight Control...";
+    setButtonLoading(submitButton, true, "Sending");
+    status.innerHTML = `<span class="loading-inline"><span class="loading-circle small" aria-hidden="true"></span><span>Sending your request to Flight Control...</span></span>`;
     status.className = "contact-form-status";
 
     try {
@@ -487,7 +552,7 @@ function initContactForm() {
             `Email: ${email}`,
             `Phone: ${phone}`,
             "",
-            "Issue:",
+            "Request:",
             issue
           ].join("\n")
         })
@@ -495,17 +560,17 @@ function initContactForm() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok || data.success === false) {
-        throw new Error(data.message || "Your issue could not be sent.");
+        throw new Error(data.message || "Your request could not be sent.");
       }
 
       status.textContent = data.message || "Sent. Flight Control will follow up.";
       status.className = "contact-form-status success";
       contactForm.reset();
     } catch (error) {
-      status.textContent = error.message || "Your issue could not be sent. Please try email or phone.";
+      status.textContent = error.message || "Your request could not be sent. Please try email or phone.";
       status.className = "contact-form-status error";
     } finally {
-      submitButton.disabled = false;
+      setButtonLoading(submitButton, false);
     }
   });
 }
@@ -520,7 +585,10 @@ function askSupportQuestion(messages, input, question) {
   addSupportMessage(messages, trimmedQuestion, "customer");
   input.value = "";
 
+  const loadingMessage = addSupportLoadingMessage(messages);
+
   window.setTimeout(() => {
+    loadingMessage.remove();
     addSupportMessage(messages, getSupportReply(trimmedQuestion), "assistant");
 
     if (shouldSendToEmail(trimmedQuestion)) {
@@ -536,7 +604,7 @@ function initSupportAssistant() {
 
   const assistant = document.createElement("aside");
   assistant.className = "support-assistant";
-  assistant.setAttribute("aria-label", "Flight Control customer support assistant");
+  assistant.setAttribute("aria-label", "Flight Control concierge assistant");
 
   const toggle = document.createElement("button");
   toggle.className = "support-toggle";
@@ -555,9 +623,9 @@ function initSupportAssistant() {
 
   const titleBlock = document.createElement("div");
   const eyebrow = document.createElement("span");
-  eyebrow.textContent = "Flight Control AI";
+  eyebrow.textContent = "Flight Control";
   const title = document.createElement("strong");
-  title.textContent = "Customer Support";
+  title.textContent = "Concierge Assistant";
   titleBlock.append(eyebrow, title);
 
   const closeButton = document.createElement("button");
@@ -571,7 +639,7 @@ function initSupportAssistant() {
   const messages = document.createElement("div");
   messages.className = "support-messages";
   messages.setAttribute("aria-live", "polite");
-  addSupportMessage(messages, "Hi, I am Flight Control AI. Ask me about pricing, aircraft options, route estimates, or customer support.", "assistant");
+  addSupportMessage(messages, "Hi, I am the Flight Control assistant. Ask me about pricing, aircraft options, route estimates, or concierge support.", "assistant");
 
   const promptList = document.createElement("div");
   promptList.className = "support-prompts";
