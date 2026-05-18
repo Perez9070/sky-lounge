@@ -42,8 +42,39 @@ const smtpSecure = process.env.SMTP_SECURE === "true" || smtpPort === 465;
 const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS?.replace(/\s/g, "");
 const emailFromName = process.env.EMAIL_FROM_NAME || "Flight Control Website";
+const supportMessageRequests = new Map();
+const supportWindowMs = 15 * 60 * 1000;
+const supportWindowLimit = 8;
 
+app.disable("x-powered-by");
+app.set("trust proxy", 1);
 app.use(express.json({ limit: "20kb" }));
+app.use((req, res, next) => {
+  res.setHeader("Content-Security-Policy", [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' https: data:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "frame-src https://www.openstreetmap.org",
+    "form-action 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'self'"
+  ].join("; "));
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "SAMEORIGIN");
+
+  if (req.secure || req.headers["x-forwarded-proto"] === "https") {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+  }
+
+  next();
+});
 app.use(express.static(publicDir));
 app.use("/images", express.static(imagesDir));
 
@@ -55,7 +86,7 @@ app.get("/health", (req, res) => {
   res.json({ status: "ok" });
 });
 
-app.post("/api/support-message", async (req, res) => {
+app.post("/api/support-message", limitSupportMessages, async (req, res) => {
   const { question, customerEmail, pageUrl } = req.body || {};
   const trimmedQuestion = typeof question === "string" ? question.trim() : "";
   const trimmedEmail = typeof customerEmail === "string" ? customerEmail.trim() : "";
@@ -80,6 +111,13 @@ app.post("/api/support-message", async (req, res) => {
     return res.status(503).json({
       success: false,
       message: "Email delivery is not configured yet. Add SMTP_USER and SMTP_PASS to the server environment."
+    });
+  }
+
+  if (safePageUrl.length > 300) {
+    return res.status(400).json({
+      success: false,
+      message: "The page URL is too long."
     });
   }
 
@@ -128,6 +166,35 @@ app.post("/api/support-message", async (req, res) => {
     });
   }
 });
+
+function limitSupportMessages(req, res, next) {
+  const now = Date.now();
+  const key = req.ip || req.headers["x-forwarded-for"] || "unknown";
+  const current = supportMessageRequests.get(key) || { count: 0, resetAt: now + supportWindowMs };
+
+  if (current.resetAt <= now) {
+    current.count = 0;
+    current.resetAt = now + supportWindowMs;
+  }
+
+  current.count += 1;
+  supportMessageRequests.set(key, current);
+
+  for (const [requestKey, record] of supportMessageRequests.entries()) {
+    if (record.resetAt <= now) {
+      supportMessageRequests.delete(requestKey);
+    }
+  }
+
+  if (current.count > supportWindowLimit) {
+    return res.status(429).json({
+      success: false,
+      message: "Too many support messages. Please wait a few minutes and try again."
+    });
+  }
+
+  return next();
+}
 
 function escapeHtml(value) {
   return String(value)

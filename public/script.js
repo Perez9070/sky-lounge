@@ -20,10 +20,19 @@ const priceResult = document.getElementById("priceResult");
 const pageName = window.location.pathname.split("/").pop() || "index.html";
 const protectedPages = ["home.html", "aircraft.html", "plane.html", "about.html", "contact.html"];
 const publicAuthPages = ["index.html", "login.html", "signup.html"];
-const isSignedIn = localStorage.getItem("flightControlSignedIn") === "true";
-const accountStorageKey = "flightControlAccount";
+const accountStorageKey = "flightControlAccounts";
+const legacyAccountStorageKey = "flightControlAccount";
+const sessionStorageKey = "flightControlSession";
+const legacySessionStorageKey = "flightControlSignedIn";
+const currentAccountStorageKey = "flightControlCurrentAccount";
+const rememberedEmailStorageKey = "flightControlRememberedEmail";
+const signInAttemptStorageKey = "flightControlSignInAttempts";
 const currencyStorageKey = "flightControlCurrency";
+const authLockoutMs = 5 * 60 * 1000;
+const passwordHashIterations = 120000;
+const isSignedIn = hasActiveSession();
 const supportEmailAddress = "perezmainaabel@gmail.com";
+let legacyMigrationPromise = null;
 const routeCities = [
   { city: "Nairobi", country: "Kenya", lat: -1.286, lon: 36.817 },
   { city: "Cape Town", country: "South Africa", lat: -33.925, lon: 18.424 },
@@ -73,13 +82,31 @@ const supportQuickLinks = isSignedIn ? [
   { label: "View aircraft", href: "aircraft.html" },
   { label: "Contact desk", href: "contact.html" }
 ] : [
-  { label: "Request access", href: "signup.html" },
+  { label: "Create account", href: "signup.html" },
   { label: "Sign in", href: "login.html" },
   { label: "Email desk", href: `mailto:${supportEmailAddress}` }
 ];
 
-function getSavedAccount() {
-  const savedAccount = localStorage.getItem(accountStorageKey);
+function normalizeEmail(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function normalizePhone(value) {
+  return String(value || "").trim();
+}
+
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function isValidPhone(phone) {
+  const digits = phone.replace(/\D/g, "");
+
+  return digits.length >= 7 && digits.length <= 15;
+}
+
+function getLegacyAccount() {
+  const savedAccount = localStorage.getItem(legacyAccountStorageKey);
 
   if (!savedAccount) {
     return null;
@@ -88,9 +115,306 @@ function getSavedAccount() {
   try {
     return JSON.parse(savedAccount);
   } catch (error) {
-    localStorage.removeItem(accountStorageKey);
+    localStorage.removeItem(legacyAccountStorageKey);
     return null;
   }
+}
+
+function getStoredAccounts() {
+  const savedAccounts = localStorage.getItem(accountStorageKey);
+
+  if (!savedAccounts) {
+    return [];
+  }
+
+  try {
+    const parsedAccounts = JSON.parse(savedAccounts);
+
+    if (Array.isArray(parsedAccounts)) {
+      return parsedAccounts.filter((account) => account && account.email);
+    }
+  } catch (error) {
+    localStorage.removeItem(accountStorageKey);
+  }
+
+  return [];
+}
+
+function saveStoredAccounts(accounts) {
+  localStorage.setItem(accountStorageKey, JSON.stringify(accounts));
+}
+
+function findAccountByEmail(email) {
+  const normalizedEmail = normalizeEmail(email);
+
+  return getStoredAccounts().find((account) => account.email === normalizedEmail) || null;
+}
+
+function getActiveSession() {
+  const savedSession = localStorage.getItem(sessionStorageKey) || sessionStorage.getItem(sessionStorageKey);
+
+  if (savedSession) {
+    try {
+      const parsedSession = JSON.parse(savedSession);
+
+      if (parsedSession?.email) {
+        return parsedSession;
+      }
+    } catch (error) {
+      localStorage.removeItem(sessionStorageKey);
+      sessionStorage.removeItem(sessionStorageKey);
+    }
+  }
+
+  if (localStorage.getItem(legacySessionStorageKey) === "true") {
+    const legacyAccount = getLegacyAccount();
+    const fallbackEmail = localStorage.getItem(currentAccountStorageKey) ||
+      localStorage.getItem(rememberedEmailStorageKey) ||
+      getStoredAccounts()[0]?.email ||
+      legacyAccount?.email;
+
+    if (fallbackEmail) {
+      return {
+        email: normalizeEmail(fallbackEmail),
+        signedInAt: new Date().toISOString(),
+        remember: true
+      };
+    }
+  }
+
+  return null;
+}
+
+function hasActiveSession() {
+  const activeSession = getActiveSession();
+
+  if (!activeSession?.email) {
+    return false;
+  }
+
+  const legacyAccount = getLegacyAccount();
+
+  return Boolean(findAccountByEmail(activeSession.email) || normalizeEmail(legacyAccount?.email) === activeSession.email);
+}
+
+function getSavedAccount() {
+  const activeSession = getActiveSession();
+  const rememberedEmail = activeSession?.email || localStorage.getItem(rememberedEmailStorageKey);
+  const savedAccount = rememberedEmail ? findAccountByEmail(rememberedEmail) : null;
+
+  if (savedAccount) {
+    return savedAccount;
+  }
+
+  return getLegacyAccount();
+}
+
+function toBase64(bytes) {
+  return btoa(String.fromCharCode(...new Uint8Array(bytes)));
+}
+
+function fromBase64(value) {
+  return Uint8Array.from(atob(value), (character) => character.charCodeAt(0));
+}
+
+function getBrowserCrypto() {
+  const browserCrypto = globalThis.crypto;
+
+  if (!browserCrypto?.getRandomValues || !browserCrypto?.subtle) {
+    throw new Error("Secure password storage requires running this site on localhost or HTTPS.");
+  }
+
+  return browserCrypto;
+}
+
+function createSalt() {
+  const browserCrypto = getBrowserCrypto();
+  const salt = new Uint8Array(16);
+  browserCrypto.getRandomValues(salt);
+
+  return toBase64(salt);
+}
+
+async function hashPassword(password, salt) {
+  const browserCrypto = getBrowserCrypto();
+  const encodedPassword = new TextEncoder().encode(password);
+  const passwordKey = await browserCrypto.subtle.importKey(
+    "raw",
+    encodedPassword,
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+
+  const passwordHash = await browserCrypto.subtle.deriveBits(
+    {
+      name: "PBKDF2",
+      salt: fromBase64(salt),
+      iterations: passwordHashIterations,
+      hash: "SHA-256"
+    },
+    passwordKey,
+    256
+  );
+
+  return toBase64(passwordHash);
+}
+
+async function createAccountRecord({ name, email, phone, password, acceptedPrivacy }) {
+  const browserCrypto = getBrowserCrypto();
+  const passwordSalt = createSalt();
+  const passwordHash = await hashPassword(password, passwordSalt);
+  const timestamp = new Date().toISOString();
+
+  return {
+    id: `acct-${browserCrypto.randomUUID ? browserCrypto.randomUUID() : timestamp}`,
+    name,
+    email,
+    phone,
+    passwordSalt,
+    passwordHash,
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    acceptedPrivacyAt: acceptedPrivacy ? timestamp : null
+  };
+}
+
+async function verifyPassword(password, account) {
+  if (!account?.passwordSalt || !account?.passwordHash) {
+    return false;
+  }
+
+  const passwordHash = await hashPassword(password, account.passwordSalt);
+
+  return passwordHash === account.passwordHash;
+}
+
+async function migrateLegacyAccountIfNeeded() {
+  if (legacyMigrationPromise) {
+    return legacyMigrationPromise;
+  }
+
+  const legacyAccount = getLegacyAccount();
+
+  if (!legacyAccount?.email || !legacyAccount?.password || findAccountByEmail(legacyAccount.email)) {
+    return;
+  }
+
+  legacyMigrationPromise = (async () => {
+    const migratedAccount = await createAccountRecord({
+      name: String(legacyAccount.name || "Flight Control Member").trim(),
+      email: normalizeEmail(legacyAccount.email),
+      phone: normalizePhone(legacyAccount.phone || ""),
+      password: legacyAccount.password,
+      acceptedPrivacy: false
+    });
+    const accounts = getStoredAccounts();
+
+    if (!findAccountByEmail(migratedAccount.email)) {
+      accounts.push(migratedAccount);
+      saveStoredAccounts(accounts);
+    }
+
+    localStorage.setItem(rememberedEmailStorageKey, migratedAccount.email);
+    localStorage.removeItem(legacyAccountStorageKey);
+  })();
+
+  try {
+    await legacyMigrationPromise;
+  } finally {
+    legacyMigrationPromise = null;
+  }
+}
+
+function getSignInAttempts() {
+  const savedAttempts = localStorage.getItem(signInAttemptStorageKey);
+
+  if (!savedAttempts) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(savedAttempts);
+  } catch (error) {
+    localStorage.removeItem(signInAttemptStorageKey);
+    return {};
+  }
+}
+
+function getLockoutSeconds(email) {
+  const attempts = getSignInAttempts();
+  const lockedUntil = attempts[normalizeEmail(email)]?.lockedUntil || 0;
+
+  return Math.max(0, Math.ceil((lockedUntil - Date.now()) / 1000));
+}
+
+function recordFailedSignIn(email) {
+  const normalizedEmail = normalizeEmail(email);
+  const attempts = getSignInAttempts();
+  const record = attempts[normalizedEmail] || { count: 0, lockedUntil: 0 };
+
+  record.count += 1;
+
+  if (record.count >= 5) {
+    record.lockedUntil = Date.now() + authLockoutMs;
+    record.count = 0;
+  }
+
+  attempts[normalizedEmail] = record;
+  localStorage.setItem(signInAttemptStorageKey, JSON.stringify(attempts));
+}
+
+function clearFailedSignIn(email) {
+  const attempts = getSignInAttempts();
+
+  delete attempts[normalizeEmail(email)];
+  localStorage.setItem(signInAttemptStorageKey, JSON.stringify(attempts));
+}
+
+function setSignedInAccount(email, remember) {
+  const normalizedEmail = normalizeEmail(email);
+  const session = JSON.stringify({
+    email: normalizedEmail,
+    signedInAt: new Date().toISOString(),
+    remember
+  });
+
+  if (remember) {
+    localStorage.setItem(sessionStorageKey, session);
+    sessionStorage.removeItem(sessionStorageKey);
+    localStorage.setItem(legacySessionStorageKey, "true");
+  } else {
+    sessionStorage.setItem(sessionStorageKey, session);
+    localStorage.removeItem(sessionStorageKey);
+    localStorage.removeItem(legacySessionStorageKey);
+  }
+
+  localStorage.setItem(currentAccountStorageKey, normalizedEmail);
+  localStorage.setItem(rememberedEmailStorageKey, normalizedEmail);
+}
+
+function clearSignedInAccount() {
+  localStorage.removeItem(sessionStorageKey);
+  localStorage.removeItem(legacySessionStorageKey);
+  localStorage.removeItem(currentAccountStorageKey);
+  sessionStorage.removeItem(sessionStorageKey);
+}
+
+function initRememberedAuthFields() {
+  const rememberedEmail = localStorage.getItem(rememberedEmailStorageKey) || getSavedAccount()?.email || "";
+
+  loginForms.forEach((form) => {
+    const emailInput = form.querySelector('input[name="email"]');
+    const rememberInput = form.querySelector('input[name="remember"]');
+
+    if (emailInput && rememberedEmail) {
+      emailInput.value = rememberedEmail;
+    }
+
+    if (rememberInput) {
+      rememberInput.checked = true;
+    }
+  });
 }
 
 function showAuthMessage(form, message, type = "error") {
@@ -387,7 +711,7 @@ function getSupportReply(message) {
   }
 
   if (/(login|sign in|signup|sign up|account|password|access)/.test(question)) {
-    return "Create an account from Request Access, then sign in with the same email and password. Passwords need at least 6 characters. This demo keeps account access locally in the browser.";
+    return "Create an account, then sign in with the same email and password. New passwords need at least 8 characters with a letter and a number. This version keeps account profiles on your device and stores password hashes instead of plain passwords.";
   }
 
   if (/(currency|kes|usd|eur|gbp|aed|qar|shilling|dollar|pound)/.test(question)) {
@@ -708,6 +1032,10 @@ if (publicAuthPages.includes(pageName) && isSignedIn) {
   window.location.href = "home.html";
 }
 
+migrateLegacyAccountIfNeeded().catch((error) => {
+  console.warn("Legacy account migration failed:", error);
+});
+
 if (themeToggle) {
   if (savedTheme === "dark") {
     document.body.classList.add("dark-mode");
@@ -755,50 +1083,125 @@ if (heroQuoteButton) {
 });
 
 loginForms.forEach((form) => {
-  form.addEventListener("submit", (event) => {
+  form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const savedAccount = getSavedAccount();
-    const email = form.querySelector('input[name="email"]').value.trim().toLowerCase();
+    const email = normalizeEmail(form.querySelector('input[name="email"]').value);
     const password = form.querySelector('input[name="password"]').value;
+    const remember = form.querySelector('input[name="remember"]')?.checked ?? true;
+    const submitButton = form.querySelector('button[type="submit"]');
+    const lockoutSeconds = getLockoutSeconds(email);
 
-    if (!savedAccount) {
-      showAuthMessage(form, "Create an account first, then sign in.");
+    if (!isValidEmail(email)) {
+      showAuthMessage(form, "Enter a valid email address.");
       return;
     }
 
-    if (savedAccount.email !== email || savedAccount.password !== password) {
-      showAuthMessage(form, "Email or password is incorrect.");
+    if (lockoutSeconds > 0) {
+      showAuthMessage(form, `Too many attempts. Try again in ${Math.ceil(lockoutSeconds / 60)} minute(s).`);
       return;
     }
 
-    localStorage.setItem("flightControlSignedIn", "true");
-    window.location.href = "home.html";
+    setButtonLoading(submitButton, true, "Signing in");
+
+    try {
+      await migrateLegacyAccountIfNeeded();
+      const savedAccount = findAccountByEmail(email);
+
+      if (!savedAccount) {
+        showAuthMessage(form, "Create an account first, then sign in.");
+        return;
+      }
+
+      if (!await verifyPassword(password, savedAccount)) {
+        recordFailedSignIn(email);
+        showAuthMessage(form, "Email or password is incorrect.");
+        return;
+      }
+
+      clearFailedSignIn(email);
+      setSignedInAccount(email, remember);
+      window.location.href = "home.html";
+    } catch (error) {
+      showAuthMessage(form, error.message || "Sign in could not be completed.");
+    } finally {
+      setButtonLoading(submitButton, false);
+    }
   });
 });
 
 if (signupForm) {
-  signupForm.addEventListener("submit", (event) => {
+  signupForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const name = signupForm.querySelector('input[name="name"]').value.trim();
-    const email = signupForm.querySelector('input[name="email"]').value.trim().toLowerCase();
+    const email = normalizeEmail(signupForm.querySelector('input[name="email"]').value);
+    const phone = normalizePhone(signupForm.querySelector('input[name="phone"]').value);
     const password = signupForm.querySelector('input[name="password"]').value;
+    const acceptedPrivacy = signupForm.querySelector('input[name="privacy"]')?.checked;
+    const submitButton = signupForm.querySelector('button[type="submit"]');
 
-    if (password.length < 6) {
-      showAuthMessage(signupForm, "Use at least 6 characters for your password.");
+    if (name.length < 2) {
+      showAuthMessage(signupForm, "Enter your full name.");
       return;
     }
 
-    localStorage.setItem(accountStorageKey, JSON.stringify({ name, email, password }));
-    localStorage.setItem("flightControlSignedIn", "true");
-    window.location.href = "home.html";
+    if (!isValidEmail(email)) {
+      showAuthMessage(signupForm, "Enter a valid email address.");
+      return;
+    }
+
+    if (!isValidPhone(phone)) {
+      showAuthMessage(signupForm, "Enter a valid phone number.");
+      return;
+    }
+
+    if (password.length < 8 || !/[A-Za-z]/.test(password) || !/\d/.test(password)) {
+      showAuthMessage(signupForm, "Use at least 8 characters with a letter and a number.");
+      return;
+    }
+
+    if (!acceptedPrivacy) {
+      showAuthMessage(signupForm, "Please agree to the Privacy Policy.");
+      return;
+    }
+
+    setButtonLoading(submitButton, true, "Creating");
+
+    try {
+      await migrateLegacyAccountIfNeeded();
+
+      if (findAccountByEmail(email)) {
+        showAuthMessage(signupForm, "That email already has an account. Sign in instead.");
+        return;
+      }
+
+      const accounts = getStoredAccounts();
+      const account = await createAccountRecord({
+        name,
+        email,
+        phone,
+        password,
+        acceptedPrivacy
+      });
+
+      accounts.push(account);
+      saveStoredAccounts(accounts);
+      setSignedInAccount(email, true);
+      window.location.href = "home.html";
+    } catch (error) {
+      showAuthMessage(signupForm, error.message || "Account could not be created.");
+    } finally {
+      setButtonLoading(submitButton, false);
+    }
   });
 }
 
 logoutLinks.forEach((link) => {
   link.addEventListener("click", () => {
-    localStorage.removeItem("flightControlSignedIn");
+    clearSignedInAccount();
   });
 });
+
+initRememberedAuthFields();
 
 if (isSignedIn) {
   initSupportAssistant();
